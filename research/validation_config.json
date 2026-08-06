@@ -1,0 +1,5 @@
+{
+  "n_seeds": 10,
+  "seed": 42,
+  "perturb_sigma": 0.03
+}

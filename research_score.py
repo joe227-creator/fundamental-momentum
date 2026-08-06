@@ -290,6 +290,9 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         "regime_scale": regime_scale,
         "prior_ends": prior_ends,
         "dates": dates,
+        "predicted": predicted,
+        "veto_threshold": threshold,
+        "trailing_window": trailing_window,
     }
 
 
@@ -389,6 +392,33 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--bootstrap-baseline-reference", action="store_true")
     args = parser.parse_args()
+
+    validation_config = Path("research/validation_config.json")
+    if validation_config.exists():
+        from research.validation_audit import run_validation
+
+        return run_validation(
+            config_path=args.config,
+            params_path=args.params,
+            reference_path=args.reference,
+            artifact_dir=args.artifact_dir,
+            validation_config_path=str(validation_config),
+        )
+
+    optuna_config = Path("research/optuna_config.json")
+    if optuna_config.exists():
+        from research.optuna_runner import run_optuna
+
+        return run_optuna(
+            config_path=args.config,
+            params_path=args.params,
+            reference_path=args.reference,
+            artifact_dir=args.artifact_dir,
+            optuna_config_path=str(optuna_config),
+            perturb_runs=args.perturb_runs,
+            perturb_sigma=args.perturb_sigma,
+            seed=args.seed,
+        )
 
     prepared = _prepare_strategy(args.config, args.params)
     base_selection = _select(prepared)
