@@ -1,0 +1,13 @@
+{
+  "name": "macro-cash-gate",
+  "study_name": "macro_cash_gate",
+  "n_trials": 6,
+  "seed": 42,
+  "fixed": {
+    "use_regime_cash": true
+  },
+  "search": {
+    "regime_cash_sma": {"type": "int", "low": 150, "high": 300},
+    "regime_cash_fraction": {"type": "float", "low": 0.25, "high": 0.75}
+  }
+}
