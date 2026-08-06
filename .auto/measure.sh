@@ -8,7 +8,7 @@ export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 
 # Local CPU runs share immutable cached market data outside Git clones.
-SHARED_CACHE="/mnt/c/Users/User/Desktop/Weekly Script/Fundamental Momentum-1st day of the month/cache"
+SHARED_CACHE="/mnt/c/Users/User/Desktop/Test/Fundamental Momentum/cache"
 if [[ ! -e cache && -d "$SHARED_CACHE" ]]; then
   ln -s "$SHARED_CACHE" cache
 fi
