@@ -1,0 +1,14 @@
+{
+  "name": "p20-veto-threshold",
+  "study_name": "p20_veto_threshold",
+  "n_trials": 6,
+  "seed": 42,
+  "fixed": {
+    "use_quantile_veto": true,
+    "quantile_col": 1,
+    "veto_horizon": 21
+  },
+  "search": {
+    "veto_threshold": {"type": "float", "low": 0.2, "high": 0.45}
+  }
+}
