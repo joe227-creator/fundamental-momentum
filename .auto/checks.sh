@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-cd "C:/Users/User/Desktop/Fundamental Momentum Test"
+cd "C:/Users/User/Desktop/Weekly Script/Fundamental Momentum-1st day of the month"
 export PYTHONPATH=src TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=1
 
 # 1) Validate params JSON has required keys and sane ranges.

@@ -196,6 +196,16 @@ def run_live(as_of: str | None = None, current_positions_path: str | None = None
         return 1
     session = loaded[-1]
 
+    # Freshness guard: if the loaded session lags the target by more than a few
+    # calendar days, price data is likely stale (yfinance outage / missed
+    # refresh) and the rebalance decision would silently flip. Surface it loudly
+    # so the operator does not act on a stale session.
+    session_lag_days = int((target - session).days)
+    stale_price = session_lag_days > 4
+    if stale_price:
+        print(f"WARNING: latest loaded price session is {session.date()} ({session_lag_days}d behind target "
+              f"{target.date()}) -- price data may be stale. Re-run with --refresh-data.", file=sys.stderr)
+
     rebalance_due = is_rebalance_session(session, sessions, cfg.strategy.rebalance_frequency)
     try:
         next_rebal = next_rebalance_session(session, sessions, cfg.strategy.rebalance_frequency)
@@ -213,19 +223,39 @@ def run_live(as_of: str | None = None, current_positions_path: str | None = None
     # Forecast coverage check for the live session (forward-fill from the most
     # recent forecast date <= session; PIT-safe). Warn if no coverage -> veto off.
     live_veto_on = False
+    forecast_date_used = None
     if session in pred_vol.index:
         live_veto_on = True
+        forecast_date_used = session
     else:
         prior_fc = pred_vol.index[pred_vol.index <= session]
         if len(prior_fc) > 0:
             live_veto_on = True  # build_veto_mask ffills to the session
+            forecast_date_used = prior_fc[-1]
+    # Surface forecast staleness: build_veto_mask ffills predicted volume from
+    # the most recent cached forecast date, so a frozen cache silently vetoes on
+    # months-old predictions while still reporting "coverage ON". Track the actual
+    # date so the operator can see the veto is stale.
+    forecast_age_days = int((session - forecast_date_used).days) if forecast_date_used is not None else None
+    stale_forecast = forecast_age_days is not None and forecast_age_days > 35
+
+    if not live_veto_on:
+        veto_cov = "off"
+        veto_cov_label = "OFF — run generate_spy_forecasts.py --quantiles"
+    elif stale_forecast:
+        veto_cov = "stale"
+        veto_cov_label = f"STALE (ffilled from {forecast_date_used.date()}, {forecast_age_days}d old)"
+    else:
+        veto_cov = "on"
+        veto_cov_label = "ON (P20 quantile)"
 
     if session not in base_scores:
         print(f"Champion Screen — {session.date()}")
         print(f"Rebalance due: {'yes' if rebalance_due else 'no'}")
         print(f"Next rebalance: {next_rebal.date() if pd.notna(next_rebal) else 'N/A'}")
         print("No eligible stocks found (macro risk-off or no candidates).")
-        print(f"RESULT session={session.date()} rebalance={'yes' if rebalance_due else 'no'} action=NONE symbol=NA vetoed=0 runtime={time.time()-t0:.1f}s")
+        print(f"RESULT session={session.date()} rebalance={'yes' if rebalance_due else 'no'} action=NONE symbol=NA "
+              f"vetoed=0 veto_cov={veto_cov} session_lag={session_lag_days} runtime={time.time()-t0:.1f}s")
         return 0
 
     sc = base_scores[session]
@@ -240,6 +270,10 @@ def run_live(as_of: str | None = None, current_positions_path: str | None = None
               file=sys.stderr)
         print(f"WARNING: veto is OFF for this session. Run `python generate_spy_forecasts.py --quantiles` to "
               f"forecast new (symbol, date) pairs, then re-screen.", file=sys.stderr)
+    if live_veto_on and stale_forecast:
+        print(f"WARNING: TimesFM forecast for {session.date()} is ffilled from {forecast_date_used.date()} "
+              f"({forecast_age_days}d old). Veto may be stale. Run `python generate_spy_forecasts.py --quantiles`.",
+              file=sys.stderr)
 
     # Champion sizing (conviction tilt + vol-adjusted, reusing the harness helper)
     weights = _size_weights(
@@ -271,6 +305,17 @@ def run_live(as_of: str | None = None, current_positions_path: str | None = None
             "action": action,
             "vetoed_symbols": ",".join(vetoed) if vetoed else "",
         })
+    # SELL rows: any currently-held symbol that dropped out of the target list
+    # so the operator sees explicit exit instructions (not a silent disappearance).
+    target_symbols = {sym for sym, _ in ranked}
+    for sym in sorted(current_holdings - target_symbols):
+        name = holdings_meta.loc[sym, "name"] if sym in holdings_meta.index else ""
+        sector = holdings_meta.loc[sym, "sector"] if sym in holdings_meta.index else ""
+        output_rows.append({
+            "rank": "", "symbol": sym, "name": name, "sector": sector,
+            "weight": "0.0000", "composite_score": "", "action": "SELL",
+            "vetoed_symbols": "",
+        })
     output_df = pd.DataFrame(output_rows)
 
     output_dir = Path("artifacts/live")
@@ -282,7 +327,7 @@ def run_live(as_of: str | None = None, current_positions_path: str | None = None
     print(f"Champion Screen (iter83, max_holdings={N}) — {session.date()}")
     print(f"Rebalance due: {'yes' if rebalance_due else 'no'}")
     print(f"Next rebalance: {next_rebal.date() if pd.notna(next_rebal) else 'N/A'}")
-    print(f"Veto coverage: {'ON (P20 quantile)' if live_veto_on else 'OFF — run generate_spy_forecasts.py --quantiles'}")
+    print(f"Veto coverage: {veto_cov_label}")
     print(f"Vetoed stocks: {len(vetoed)} ({', '.join(vetoed) if vetoed else 'none'})")
     print()
     if not output_df.empty:
@@ -296,9 +341,8 @@ def run_live(as_of: str | None = None, current_positions_path: str | None = None
     rebal_flag = "yes" if rebalance_due else "no"
     top_action = output_rows[0]["action"] if output_rows else "NONE"
     top_symbol = output_rows[0]["symbol"] if output_rows else "NA"
-    veto_cov = "on" if live_veto_on else "off"
     print(f"RESULT session={session.date()} rebalance={rebal_flag} action={top_action} symbol={top_symbol} "
-          f"vetoed={len(vetoed)} veto_cov={veto_cov} runtime={time.time()-t0:.1f}s")
+          f"vetoed={len(vetoed)} veto_cov={veto_cov} session_lag={session_lag_days} runtime={time.time()-t0:.1f}s")
     return 0
 
 

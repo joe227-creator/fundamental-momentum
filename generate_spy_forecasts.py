@@ -29,8 +29,10 @@ CTX = 256
 HOR = 21
 KIND = "volume"
 MIN_OBS = 64
-BATCH = 128
-CHECKPOINT_EVERY = 8000  # write partial cache every N forecasts (resumable)
+# Batch size is env-configurable so GPU-constrained hosts (e.g. 4 GB VRAM) can
+# avoid the OOM halve-and-retry loop: pick a size that fits in VRAM up front.
+BATCH = int(os.environ.get("TFM_BATCH", "128"))
+CHECKPOINT_EVERY = int(os.environ.get("TFM_CHECKPOINT", "8000"))  # write partial cache every N forecasts (resumable)
 
 # Mode set via CLI (--quantiles). Default: mean-only cache (_m.parquet).
 QUANTILES = False
@@ -209,22 +211,48 @@ def main():
     if args.rebalance_freq:
         config.strategy.rebalance_frequency = args.rebalance_freq
         print(f"Override rebalance_frequency = {args.rebalance_freq} (for request dates)", flush=True)
-    context = load_market_context(config=config, cache_dir="cache", refresh=False)
+    # Force-refresh S&P 500 holdings on every run so new constituents are always
+    # detected (the holdings scrape is cheap). Prices/FRED/fundamentals refresh
+    # via their cache windows (3/7/30 days) -- which always trigger on the monthly
+    # scheduled run since the last data load was ~30 days prior. Pass --refresh-data
+    # to run_champion.py live to force-refresh the rule-based screen too.
+    context = load_market_context(config=config, cache_dir="cache", refresh=False, refresh_holdings=True)
     universe_syms = list(context.prices.volume.columns)
     print(f"SPY universe symbols with prices: {len(universe_syms)}", flush=True)
 
     existing = load_existing_cache()
     existing_syms = set(str(s) for s in existing.index.get_level_values("symbol").unique()) if not existing.empty else set()
     existing_index = set(existing.index) if not existing.empty else set()
-    print(f"Existing cache: {len(existing)} rows, {len(existing_syms)} symbols", flush=True)
+    cached_dates = set(pd.Timestamp(d).normalize() for d in existing.index.get_level_values("date").unique()) if not existing.empty else set()
+    print(f"Existing cache: {len(existing)} rows, {len(existing_syms)} symbols, {len(cached_dates)} dates", flush=True)
 
     missing_syms = [s for s in universe_syms if s not in existing_syms]
     print(f"Missing symbols (need forecasts): {len(missing_syms)}", flush=True)
-    if not missing_syms:
-        print("Nothing to generate. Cache already covers the universe.")
+
+    # The cache must cover every monthly rebalance DATE, not just every symbol.
+    # build_veto_mask ffills predicted volume from the most recent cached date,
+    # so a missing recent month leaves the live P20 veto on stale (ffilled)
+    # forecasts. The old symbol-only short-circuit froze the cache at its oldest
+    # date once every universe symbol had >=1 forecast -- new months never got
+    # forecast and the live veto drifted stale (the 2026-07-01 run vetoed on a
+    # 2026-01-02 forecast). Build requests for the full universe and extend the
+    # cache for any new rebalance dates.
+    sessions = context.prices.sessions
+    rebal = select_rebalance_sessions(sessions, config.strategy.rebalance_frequency)
+    new_dates = [pd.Timestamp(d) for d in rebal
+                 if pd.Timestamp(d) >= pd.Timestamp("2015-01-01")
+                 and pd.Timestamp(d) in sessions
+                 and pd.Timestamp(d) not in cached_dates]
+    print(f"Missing rebalance dates (need forecasts): {len(new_dates)}", flush=True)
+
+    if not missing_syms and not new_dates:
+        print("Nothing to generate. Cache already covers the universe (all symbols and dates).")
         return
 
-    rows = build_missing_requests(context, config, missing_syms, existing_index)
+    # build_missing_requests skips any (symbol, date) pair already in the cache,
+    # so passing the full universe extends the cache for new dates AND new
+    # symbols without recomputing cached pairs.
+    rows = build_missing_requests(context, config, universe_syms, existing_index)
     print(f"Built {len(rows)} (symbol,date) request rows (after min_obs={MIN_OBS} filter)", flush=True)
     if rows.empty:
         print("No forecastable rows. Done.")

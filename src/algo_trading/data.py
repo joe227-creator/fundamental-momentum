@@ -628,6 +628,25 @@ def download_price_panel(
     if not symbol_frames:
         raise RuntimeError("No price data could be downloaded from yfinance.")
 
+    # Partial-download guard: a mostly-failed yfinance fetch (e.g. a transient
+    # outage mid-batch) would otherwise silently shrink the universe and produce
+    # a wrong "latest session". Warn on any failures and abort if a large share
+    # of the universe is missing so the caller does not act on a tiny universe.
+    failed = [t for t in tickers if t not in symbol_frames]
+    failure_rate = len(failed) / max(1, len(tickers))
+    if failed:
+        preview = ", ".join(failed[:10]) + ("…" if len(failed) > 10 else "")
+        warnings.warn(
+            f"yfinance returned no data for {len(failed)}/{len(tickers)} tickers "
+            f"({failure_rate:.0%}); missing include {preview}.",
+            stacklevel=2,
+        )
+        if failure_rate > 0.20:
+            raise RuntimeError(
+                f"Partial price download: {failure_rate:.0%} of tickers failed (>20% threshold). "
+                f"Re-run with --refresh-data or check connectivity. Missing: {preview}"
+            )
+
     open_df = pd.concat({symbol: frame["Open"] for symbol, frame in symbol_frames.items()}, axis=1).sort_index(axis=1)
     high_df = pd.concat({symbol: frame["High"] for symbol, frame in symbol_frames.items()}, axis=1).sort_index(axis=1)
     low_df = pd.concat({symbol: frame["Low"] for symbol, frame in symbol_frames.items()}, axis=1).sort_index(axis=1)

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "algo-trading-research"
 version = "0.1.0"
-description = "Research harness for an IWV constituent rotation strategy."
+description = "SPY / S&P 500 champion rotation strategy harness."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -16,6 +16,7 @@ dependencies = [
     "pyarrow>=14.0.0",
     "requests>=2.32.0",
     "scipy>=1.15.0",
+    "optuna>=4.0.0",
     "yfinance>=0.2.54",
 ]
 

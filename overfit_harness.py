@@ -19,7 +19,6 @@ Secondary: overall sharpe/cagr/calmar/maxdd/sortino, mean/std annual sharpe,
 
 CLI:
   python overfit_harness.py --config config/research.json --params research_params.json
-  python overfit_harness.py --config config/champion.json --params autoresearch_params.json --verify
 """
 from __future__ import annotations
 

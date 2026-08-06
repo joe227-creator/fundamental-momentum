@@ -120,11 +120,5 @@
       "CFNAI": true,
       "DTWEXBGS": true
     }
-  },
-  "champion_veto": {
-    "veto_threshold": 0.775,
-    "trailing_vol_window": 53,
-    "veto_horizon": 21,
-    "cost_per_side": 0.0003
   }
 }

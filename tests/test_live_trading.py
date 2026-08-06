@@ -304,11 +304,71 @@ def test_calendar_guard_flags_first_session_of_month() -> None:
     # 2026-04-01 is the first NYSE trading day of April 2026.
     result = subprocess.run([python, str(guard), "2026-04-01"], cwd=repo_root, capture_output=True, text=True, check=False)
     assert result.returncode == 0, result.stdout + result.stderr
+    # The guard must announce the candidate session so the launcher can parse it.
+    assert "SESSION=2026-04-01" in result.stdout
 
     # 2026-04-13 is a trading day but not the first of the month.
     result = subprocess.run([python, str(guard), "2026-04-13"], cwd=repo_root, capture_output=True, text=True, check=False)
     assert result.returncode == 2, result.stdout + result.stderr
+    assert "SESSION=2026-04-13" in result.stdout
 
     # 2026-04-04 is a Saturday (not a trading day).
     result = subprocess.run([python, str(guard), "2026-04-04"], cwd=repo_root, capture_output=True, text=True, check=False)
     assert result.returncode == 2, result.stdout + result.stderr
+
+
+def test_calendar_guard_auto_mode_returns_month_first_session_for_catchup() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    guard = repo_root / "scripts" / "is_first_nyse_rebalance_session.py"
+    python = sys.executable
+
+    # 2026-07-03 01:00 UTC = 2026-07-02 21:00 ET, after the July 2 close.
+    # If July was not processed yet, the launcher must catch up the July 1
+    # first-of-month rebalance rather than exit 2 because July 2 itself is not
+    # first-of-month.
+    result = subprocess.run(
+        [python, str(guard), "--now-utc", "2026-07-03T01:00:00+00:00"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "SESSION=2026-07-01" in result.stdout
+    assert "CANDIDATE_SESSION=2026-07-02" in result.stdout
+
+
+def test_launcher_skips_when_month_already_processed(tmp_path: Path) -> None:
+    """Catch-up: a state file recording the month makes the launcher skip the screen."""
+    shell = shutil.which("pwsh") or shutil.which("powershell")
+    if shell is None:
+        pytest.skip("PowerShell is not available")
+
+    repo_root = Path(__file__).resolve().parents[1]
+    launcher = repo_root / "scripts" / "run_champion_live.ps1"
+    state_file = repo_root / "artifacts" / "live" / "last_rebalance_processed.txt"
+    lock_file = repo_root / "artifacts" / "live" / ".run.lock"
+
+    # Pre-record April so a 2026-04-01 run is treated as already done.
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    state_file.write_text("2026-04", encoding="ascii")
+    try:
+        result = subprocess.run(
+            [shell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(launcher), "-AsOf", "2026-04-01"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        combined = f"{result.stdout}\n{result.stderr}"
+        assert result.returncode == 0, combined
+        assert "already processed" in combined
+        # The screen must NOT have run (no forecast refresh, no python run_champion.py).
+        assert "Refreshing TimesFM forecasts" not in combined
+        assert "Run ended." in combined
+        assert not lock_file.exists()  # lock always cleaned up
+    finally:
+        if state_file.exists():
+            state_file.unlink()
+        if lock_file.exists():
+            lock_file.unlink()

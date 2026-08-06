@@ -2,6 +2,7 @@ __pycache__/
 .pytest_cache/
 .venv/
 artifacts/
+.openresearch/
 cache/
 timesfm-2.5-200m-transformers/model.safetensors
 *.pyc

@@ -310,7 +310,7 @@ def run_weighted_backtest(
                 gross = h["shares"] * px
                 fee = gross * tc_rate
                 cash += gross - fee
-                trade_rows.append({"date": ts, "action": "SELL", "symbol": s, "shares": h["shares"], "price": px, "fee": fee, "pnl": (gross - fee) - h["cost_basis"], "reason": "rebalance"})
+                trade_rows.append({"date": ts, "action": "SELL", "symbol": s, "shares": h["shares"], "price": px, "gross_value": gross, "fee": fee, "pnl": (gross - fee) - h["cost_basis"], "reason": "rebalance"})
             # Buy target weights
             if target:
                 total_w = sum(target.values())
@@ -328,7 +328,7 @@ def run_weighted_backtest(
                     shares = investable / px
                     cash -= target_capital
                     holdings[s] = {"shares": shares, "entry_date": ts, "entry_price": px, "cost_basis": investable + fee}
-                    trade_rows.append({"date": ts, "action": "BUY", "symbol": s, "shares": shares, "price": px, "fee": fee, "pnl": np.nan, "reason": "rebalance"})
+                    trade_rows.append({"date": ts, "action": "BUY", "symbol": s, "shares": shares, "price": px, "gross_value": target_capital, "fee": fee, "pnl": np.nan, "reason": "rebalance"})
 
         # mark-to-market at close
         equity = cash
@@ -347,7 +347,7 @@ def run_weighted_backtest(
         gross = h["shares"] * px
         fee = gross * tc_rate
         cash += gross - fee
-        trade_rows.append({"date": last, "action": "SELL", "symbol": s, "shares": h["shares"], "price": px, "fee": fee, "pnl": (gross - fee) - h["cost_basis"], "reason": "final"})
+        trade_rows.append({"date": last, "action": "SELL", "symbol": s, "shares": h["shares"], "price": px, "gross_value": gross, "fee": fee, "pnl": (gross - fee) - h["cost_basis"], "reason": "final"})
 
     eq = pd.DataFrame(eq_rows).drop_duplicates("date", keep="last").set_index("date")
     eq["returns"] = eq["equity"].pct_change()
