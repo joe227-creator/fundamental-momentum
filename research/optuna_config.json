@@ -1,0 +1,14 @@
+{
+  "name": "forecast-uncertainty-sizing",
+  "study_name": "forecast_uncertainty_sizing",
+  "n_trials": 6,
+  "seed": 42,
+  "fixed": {
+    "use_quantile_veto": true,
+    "quantile_col": 1,
+    "veto_horizon": 21
+  },
+  "search": {
+    "forecast_uncertainty_power": {"type": "float", "low": 0.0, "high": 2.0}
+  }
+}
