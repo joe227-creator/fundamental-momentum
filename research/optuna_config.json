@@ -1,0 +1,14 @@
+{
+  "name": "conviction-sizing",
+  "study_name": "conviction_sizing",
+  "n_trials": 6,
+  "seed": 42,
+  "fixed": {
+    "conf_tilt": true,
+    "conf_tilt_vol": true
+  },
+  "search": {
+    "weight_tilt": {"type": "float", "low": 0.0, "high": 0.25},
+    "conf_tilt_vol_pow": {"type": "float", "low": 1.0, "high": 6.0}
+  }
+}
