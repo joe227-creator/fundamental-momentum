@@ -1,0 +1,12 @@
+{
+  "name": "inverse-vol-horizon",
+  "study_name": "inverse_vol_horizon",
+  "n_trials": 6,
+  "seed": 42,
+  "fixed": {
+    "vol_scaled_weights": true
+  },
+  "search": {
+    "vol_lookback": {"type": "int", "low": 10, "high": 63}
+  }
+}
