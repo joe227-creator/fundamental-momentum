@@ -1,0 +1,14 @@
+{
+  "name": "timesfm-context-length",
+  "study_name": "timesfm_context_length",
+  "n_trials": 6,
+  "seed": 42,
+  "fixed": {
+    "use_quantile_veto": true,
+    "quantile_col": 1,
+    "veto_horizon": 21
+  },
+  "search": {
+    "forecast_context_len": {"type": "categorical", "choices": [256, 512]}
+  }
+}
