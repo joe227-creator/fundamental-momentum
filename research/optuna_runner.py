@@ -104,19 +104,14 @@ def run_optuna(
 
     seed_results: list[dict[str, Any]] = []
     for index in range(max(0, int(perturb_runs))):
-        merged = dict(base_params)
-        merged.update(best_params)
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as handle:
-            json.dump(merged, handle)
-            trial_path = handle.name
-        try:
-            prepared = _prepare_strategy(config_path, trial_path)
-            selection = _select(prepared, seed=seed + 1000 + index, sigma=perturb_sigma)
-            metrics, _, _, _ = _evaluate_result(prepared, selection, baseline_turnover)
-            metrics["seed"] = seed + 1000 + index
-            seed_results.append(metrics)
-        finally:
-            Path(trial_path).unlink(missing_ok=True)
+        selection = _select(
+            best_prepared, seed=seed + 1000 + index, sigma=perturb_sigma
+        )
+        metrics, _, _, _ = _evaluate_result(
+            best_prepared, selection, baseline_turnover
+        )
+        metrics["seed"] = seed + 1000 + index
+        seed_results.append(metrics)
 
     if seed_results:
         scores = np.array([row["research_score"] for row in seed_results], dtype=float)
