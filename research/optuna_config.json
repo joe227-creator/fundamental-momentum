@@ -1,0 +1,9 @@
+{
+  "name": "rebalance-cadence",
+  "study_name": "rebalance_cadence",
+  "n_trials": 3,
+  "seed": 42,
+  "search": {
+    "rebalance_frequency": {"type": "categorical", "choices": ["monthly", "biweekly", "weekly"]}
+  }
+}
