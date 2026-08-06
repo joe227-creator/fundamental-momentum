@@ -1,0 +1,9 @@
+{
+  "name": "breadth-risk",
+  "study_name": "breadth_risk",
+  "n_trials": 6,
+  "seed": 42,
+  "search": {
+    "max_holdings": {"type": "int", "low": 1, "high": 4}
+  }
+}
