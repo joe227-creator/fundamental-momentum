@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "algo-trading-research"
+version = "0.1.0"
+description = "Research harness for an IWV constituent rotation strategy."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fredapi>=0.5.2",
+    "numpy>=2.0.0",
+    "pandas>=2.2.0",
+    "pandas-market-calendars>=4.4.0",
+    "pyarrow>=14.0.0",
+    "requests>=2.32.0",
+    "scipy>=1.15.0",
+    "yfinance>=0.2.54",
+]
+
+[project.scripts]
+algo-trading = "algo_trading.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/algo_trading"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

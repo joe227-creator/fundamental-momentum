@@ -1,0 +1,12 @@
+__pycache__/
+.pytest_cache/
+.venv/
+artifacts/
+cache/
+timesfm-2.5-200m-transformers/model.safetensors
+*.pyc
+*.pyo
+*.pyd
+Thumbs.db
+
+.auto/last_metrics.txt

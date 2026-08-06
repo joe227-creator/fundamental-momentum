@@ -1,0 +1,58 @@
+$HEIA: possibly delisted; no timezone found
+
+1 Failed download:
+['HEIA']: possibly delisted; no timezone found
+HTTP Error 404: {"quoteSummary":{"result":null,"error":{"code":"Not Found","description":"No fundamentals data found for symbol: FOX"}}}
+METRIC worst_year_sharpe=0.350287
+METRIC robust_score=0.829449
+METRIC sharpe=1.243198
+METRIC cagr=0.571030
+METRIC max_drawdown=-0.435286
+METRIC calmar=1.311850
+METRIC sortino=1.798273
+METRIC information_ratio=1.128432
+METRIC mean_year_sharpe=1.101361
+METRIC std_year_sharpe=0.543824
+METRIC best_year_sharpe=2.175667
+METRIC n_years=11
+METRIC perturb_sharpe_std=0.076198
+METRIC perturb_worst_year_std=0.090599
+METRIC perturb_mean_worst_year=0.079568
+METRIC perturb_mean_sharpe=1.237289
+METRIC perturb_robust_std=0.095876
+METRIC veto_pct=0.083237
+METRIC year_2015_sharpe=0.417434
+METRIC year_2015_cagr=0.135497
+METRIC year_2015_maxdd=-0.234061
+METRIC year_2016_sharpe=1.064672
+METRIC year_2016_cagr=0.362557
+METRIC year_2016_maxdd=-0.201359
+METRIC year_2017_sharpe=1.381472
+METRIC year_2017_cagr=0.484604
+METRIC year_2017_maxdd=-0.214314
+METRIC year_2018_sharpe=1.604808
+METRIC year_2018_cagr=0.676747
+METRIC year_2018_maxdd=-0.272799
+METRIC year_2019_sharpe=0.675665
+METRIC year_2019_cagr=0.221692
+METRIC year_2019_maxdd=-0.226815
+METRIC year_2020_sharpe=1.030355
+METRIC year_2020_cagr=0.497931
+METRIC year_2020_maxdd=-0.317516
+METRIC year_2021_sharpe=1.638485
+METRIC year_2021_cagr=0.802698
+METRIC year_2021_maxdd=-0.263055
+METRIC year_2022_sharpe=0.350287
+METRIC year_2022_cagr=0.118161
+METRIC year_2022_maxdd=-0.217444
+METRIC year_2023_sharpe=1.178041
+METRIC year_2023_cagr=0.514331
+METRIC year_2023_maxdd=-0.240860
+METRIC year_2024_sharpe=2.175667
+METRIC year_2024_cagr=2.060880
+METRIC year_2024_maxdd=-0.286503
+METRIC year_2025_sharpe=0.598087
+METRIC year_2025_cagr=0.247963
+METRIC year_2025_maxdd=-0.435286
+METRIC runtime=486.1
+# worst_year_sharpe=0.3503 robust=0.8294 sharpe=1.2432 cagr=0.5710 maxdd=-0.4353 meanY=1.1014 stdY=0.5438 perturb_worst_std=0.0906 vetoed=8.3%

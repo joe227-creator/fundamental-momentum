@@ -1,0 +1,106 @@
+TimesFM Research Insights: SP500 Rotation Strategy Upgrade
+Current System Summary
+Your IWV harness (now targeting the SP500 universe) uses TimesFM in a single narrow role: a volume veto gate that discards any candidate stock if its predicted volume ÷ trailing average falls below 0.775 over a 21-session horizon. TimesFM is applied zero-shot with a point estimate only — no quantile output, no per-asset adaptation, and no contribution to alpha generation or risk sizing. The champion parameters already achieve Sharpe 1.516 and Calmar 1.759, but the Max Drawdown of -67% and a 17.4% veto rate highlight significant tail-risk exposure that better TSFM use could address.
+
+Key Academic Findings
+Zero-shot TSFMs underperform on raw equity returns
+The most important finding from "Re(Visiting) Time Series Foundation Models in Finance" (arXiv 2511.18578) is a sobering benchmark: off-the-shelf Chronos (large) achieves out-of-sample R² of only -1.37% and ~51% directional accuracy on daily excess returns across the SP500, while zero-shot TimesFM (500M) actually hits -2.80% R² — both worse than tree-based baselines like CatBoost and LightGBM. However, the same paper shows consistent improvement once financial factors and synthetic data augmentation are added to TSFM training, achieving higher accuracy and stronger risk-adjusted portfolio returns than benchmarks. The key insight: TSFMs should not be used raw for return prediction, but are excellent when combined with structured financial features or domain-adapted.
+
+Financial continual pre-training 4× improves Sharpe on SP500
+"Financial Fine-tuning a Large Time Series Model" (arXiv 2412.09880) fine-tunes TimesFM via continual pre-training on 100 million financial time points spanning hourly and daily granularities across equity indices, FX, and crypto. On mock trading of SP500, the fine-tuned TimesFM achieves Sharpe ratio 1.68 vs. 0.42 for the base TimesFM — a 4× improvement — while the base model barely edges random chance. LoRA and frozen-weight variants are noted as alternatives to full continual pre-training that reduce catastrophic forgetting risk.
+
+Dual Adaptation: lightweight asset-specific adapters
+"Dual Adaptation of Time-Series Foundation Models for Financial Forecasting" (OpenReview, ICML 2025) proposes freezing TimesFM weights and adding two adapter modules: a Generalizer Adapter (shared cross-asset temporal patterns) and an Identity Signature (per-asset embedding). This achieves better MSE than frozen TimesFM and matches full fine-tuning performance while remaining lightweight — directly applicable to your SP500 universe where each stock has a distinct volume and volatility regime.
+
+TimesFM-ICF: few-shot without gradient updates
+Google's "In-Context Fine-Tuning for Time-Series Foundation Models" (ICML 2025) introduces a continued pre-training step that teaches TimesFM to learn from in-context examples at inference time. TimesFM-ICF improves over the base model by 6.8% on 23 unseen datasets and matches the accuracy of supervised per-dataset fine-tuning without any gradient steps at deployment. For SP500 rotation, this means you can supply a handful of recent volume/volatility examples per stock at inference time and get adapted forecasts — zero infrastructure overhead.
+
+TRACE & PEFT beyond LoRA
+"TRACE" (arXiv 2503.16991) introduces Gated DSIC, a PEFT technique specifically for TSFM pre-training models that outperforms standard LoRA on time series tasks. Separately, "Beyond LoRA" (OpenReview) benchmarks BitFit, LayerNorm Tuning, VeRA, and FourierFT on Chronos for vital-sign forecasting — all achieving comparable or better accuracy than LoRA while training as few as 256 parameters. FourierFT applied to Chronos Tiny outperformed SOTA models trained from scratch. These findings generalize to TimesFM fine-tuning for your financial application.
+
+TimesFM 2.5: the current production frontier
+Released March 2026, TimesFM 2.5 (200M params, down from 500M) provides:
+
+16,384-step context window (8× longer than 2.0) — critical for fitting 53-session trailing window plus multi-year history
+
+Optional 30M quantile head for probabilistic forecasting up to 1,000 steps ahead
+
+Native covariate support via XReg (e.g. macro regime, fundamentals as covariates)
+
+Rotary attention, QK normalization, per-dimension attention scaling
+
+On financial and retail datasets, 2.5 reduces MAE 15-25% vs ARIMA and matches explicitly trained DeepAR and PatchTST on long horizons.
+
+Challenger Models for Head-to-Head Testing
+Model	Architecture	Key Advantage	Weakness vs TimesFM
+Chronos-2 (Amazon, Feb 2026) 
+Quantized T5 encoder-decoder	Superior calibrated uncertainty; multivariate support	Slower inference; tokenization adds noise on financials
+Moirai (Salesforce) 
+Universal TS Transformer (encoder-decoder)	5,000-step context; distributional (StudentT, NegBinomial)	Non-commercial (CC BY-NC 4.0); heavier memory
+Lag-Llama 
+Decoder-only (LLaMA-style)	Probabilistic; good for stock-specific regimes	Weaker on SP500 — shown narrowing but behind GJR-GARCH on tail risk 
+LightGBM/CatBoost 
+Tree-based ensemble	Currently beats raw TSFMs on return prediction R²	No distributional output; no temporal structure
+LSTM 
+RNN	Outperforms RF/SVM on SP500 relative return prediction; proven on 2017-2022	No pre-training; per-stock training needed
+PatchTST 
+Supervised channel-independent Transformer	Matched by TimesFM 2.5 zero-shot at much lower cost	No pre-trained knowledge
+TimesFM Tuning Levers
+1. Architecture upgrades available now
+Upgrade to TimesFM 2.5 (200M): swap your timesfm_engine.py checkpoint; gain 8× context window (allow full history per stock), quantile head, and covariate slots for macro/fundamental features
+
+Enable use_continuous_quantile_head=True: unlocks probabilistic quantile output directly from the existing API — no additional training needed
+
+Tune context length as a hyperparameter: longer context is not always better; treat it like a strategy parameter (test 252, 512, 1024, 4096 steps) since the optimal length depends on serial correlation structure
+
+2. PEFT fine-tuning options (ranked by complexity)
+Method	Trainable Params	Catastrophic Forgetting Risk	Recommended Config
+LoRA (via HF PEFT) 
+~1-5% of base	Low	rank=16, α=32, lr=1e-4, 2-3 epochs, target attention + MLP layers
+LayerNorm Tuning 
+<1%	Very low	Only layer norm params; good for domain shift without memorization
+BitFit 
+~0.1% (bias only)	Very low	Fast to test; surprisingly competitive at 256 params
+FourierFT 
+<1%	Very low	Best PEFT result in TSFM benchmarks; worth testing first
+Dual Adaptation Adapters 
+~5-10%	Low	Generalizer (cross-asset) + Identity Signature (per-stock); best for SP500 universe
+Continual Pre-training 
+100%	High (needs 80-20 general/financial data mix)	Highest ceiling — SP500 Sharpe improved from 0.42 → 1.68 in paper
+TimesFM-ICF (in-context) 
+0% at inference	None	6.8% accuracy gain; supply recent volume/vol examples per stock at inference time
+3. Loss function adjustments
+Current TimesFM uses MSE + pinball loss; for volume prediction switch to Tweedie loss (handles zero-inflated, right-skewed count data better than MSE)
+
+For a volatility-forecasting variant, Huber loss (robust to volume spikes) or quantile loss focused on lower quantiles reduces veto false-negatives (missing illiquidity events)
+
+4. Covariate injection (TimesFM 2.5 XReg)
+Add macro regime signals (your existing FRED features), VIX term structure, and fundamental features (asset growth, earnings yield already in your ranking) as dynamic covariates in the XReg module
+
+This converts your current separate macro gate + TFM veto into a unified model that conditions volume forecasts on macro state, potentially reducing veto false positives during macro stress regimes
+
+Structural Changes to Improve Risk-Adjusted Return
+Priority 1: Probabilistic veto (quick win)
+Replace the hard ratio threshold with a lower quantile gate: veto if the P10 or P20 quantile of TimesFM 2.5's volume forecast is below a minimum threshold. This explicitly encodes downside liquidity risk instead of mean conditions and should reduce the tail of drawdowns without impacting CAGR significantly.
+
+Priority 2: TSFM-based volatility overlay (medium effort)
+Use TimesFM/Chronos to forecast short-horizon realized volatility and expected shortfall for each SP500 candidate, then add a second gate: only hold positions when forecasted annualized vol is below a regime threshold. This directly attacks the -67% Max Drawdown. The Dual Adaptation paper shows this approach improves both statistical and economic performance metrics on equity indices.
+
+Priority 3: Multi-model ensemble veto (medium effort)
+Run TimesFM 2.5 + Chronos-2 + LightGBM (trained on volume features) in parallel; require majority agreement to pass the veto or use soft-weighted average of their liquidity risk scores. This hedges model-specific failure modes; the "Re(Visiting)" paper shows that cross-model ensembles with financial factor augmentation are more robust than any single TSFM.
+
+Priority 4: Fine-tune TimesFM on SP500 volume history
+Apply Dual Adaptation (Generalizer Adapter + Identity Signature) using your historical SP500 constituent volumes as fine-tuning data, keeping base TimesFM frozen. This is lower risk than full continual pre-training but captures SP500-specific microstructure. For a higher ceiling result, replicate "Financial Fine-Tuning a Large Time Series Model"'s continual pre-training on SP500 + other financial data, which delivered Sharpe 1.68 in mock trading.
+
+Recommended Experiment Sequence for Your Harness
+Swap to TimesFM 2.5 + enable quantile head → measure veto rate and out-of-sample Sharpe/MaxDD change with zero training cost
+
+Implement P20-quantile veto in timesfm_engine.py config fields → walk-forward comparison vs. current point-ratio veto
+
+Add Chronos-2 as parallel veto model → ensemble both into an agreement gate, measure Sharpe/Calmar vs. single-model
+
+Apply FourierFT or BitFit to TimesFM 2.5 on SP500 volume data → low-risk fine-tuning with <1% parameters, validate on walk-forward splits
+
+Add volatility forecast overlay using TimesFM-ICF (zero-shot with recent examples) as a second risk gate in strategy.py → target Max Drawdown reduction
+
+Long-term: Dual Adaptation fine-tuning with per-stock Identity Signature trained on SP500 universe history → maximum SP500-specific forecasting accuracy

@@ -1,0 +1,130 @@
+{
+  "universe": {
+    "etf_ticker": "IWV",
+    "universe_limit": 200,
+    "historical_holdings_dir": "data/holdings_history",
+    "use_historical_snapshots": true,
+    "allow_current_holdings_fallback": true,
+    "min_price": 0.50,
+    "min_avg_dollar_volume": 11000000.0,
+    "min_history_days": 260,
+    "statement_lag_days": 60,
+    "fundamentals_cache_days": 30,
+    "holdings_cache_days": 7
+  },
+  "indicators": {
+    "sma_fast": 3,
+    "sma_slow": 50,
+    "sma_trend": 201,
+    "ema_fast": 21,
+    "ema_slow": 21,
+    "breakout_weeks": 26,
+    "variable_week_high_windows": [13, 26, 52],
+    "ts_mom_lookback_months": 9,
+    "ts_mom_skip_months": 0,
+    "rsi_period": 14,
+    "cci_period": 20,
+    "macd_fast": 12,
+    "macd_slow": 26,
+    "macd_signal": 9,
+    "obv_ema": 20,
+    "bollinger_window": 20,
+    "bollinger_std": 2.0,
+    "price_action_weeks": 8,
+    "enabled_indicators": {
+      "sma_crossover": true,
+      "ema_crossover": true,
+      "trend_filter": true,
+      "breakout": false,
+      "rsi": false,
+      "cci": false,
+      "macd": false,
+      "obv": false,
+      "bollinger": false,
+      "ts_momentum": true,
+      "variable_week_high": false,
+      "price_action": false,
+      "book_to_market": false,
+      "earnings_yield": true,
+      "roa": false,
+      "roe": false,
+      "gross_profitability": false,
+      "asset_growth": true,
+      "investment_to_assets": false,
+      "net_issuance": false,
+      "accruals": false,
+      "cash_flow_yield": false,
+      "earnings_surprise": false
+    }
+  },
+  "strategy": {
+    "signal_timeframe": "weekly",
+    "rebalance_frequency": "monthly",
+    "max_holdings": 1,
+    "close_positions_before_new_positions": true,
+    "transaction_cost_bps": 3.0,
+    "initial_capital": 100000.0,
+    "full_turnover_rebalance": false,
+    "require_positive_composite": true,
+    "allow_cash_when_risk_off": true,
+    "macro_half_risk_threshold": -0.5,
+    "macro_flat_threshold": -1.0,
+    "base_filter_requires_trend": false
+  },
+  "backtest": {
+    "start_date": null,
+    "lookback_years": 30,
+    "end_date": null,
+    "benchmark_ticker": "IWV",
+    "price_cache_days": 3,
+    "fred_cache_days": 7
+  },
+  "walk_forward": {
+    "train_years": 5,
+    "test_months": 12,
+    "step_months": 12,
+    "min_train_rebalances": 26,
+    "use_indicator_ic_weights": false,
+    "indicator_weighting_scheme": "grouped_equal",
+    "fundamental_group_weight": 0.03,
+    "fundamental_factor_weights": {
+      "asset_growth": 20.0,
+      "earnings_yield": 3.0
+    }
+  },
+  "research": {
+    "iterations": 400,
+    "random_seed": 42,
+    "max_drawdown_limit": 0.5,
+    "annualized_return_weight": 100.0,
+    "profit_factor_weight": 10.0,
+    "drawdown_weight": 50.0,
+    "consecutive_no_improvement_limit": 40,
+    "keep_top_n": 5
+  },
+  "macro": {
+    "zscore_window": 252,
+    "enabled_series": {
+      "CFNAIDIFF": true,
+      "EMVMACROBUS": true,
+      "VIXCLS": true,
+      "VXVCLS": true,
+      "GVZCLS": true,
+      "OVXCLS": true,
+      "DGS10": true,
+      "T10Y3M": true,
+      "FEDFUNDS": true,
+      "STLFSI4": true,
+      "NFCI": true,
+      "UMCSENT": true,
+      "CFNAI": true,
+      "DTWEXBGS": true
+    }
+  },
+  "champion_veto": {
+    "veto_threshold": 0.775,
+    "trailing_vol_window": 53,
+    "veto_horizon": 21,
+    "cost_per_side": 0.0003
+  }
+}

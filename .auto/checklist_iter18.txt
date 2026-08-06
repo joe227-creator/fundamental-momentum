@@ -1,0 +1,135 @@
+==========================================================================================
+COMPREHENSIVE OVERFITTING CHECKLIST
+==========================================================================================
+Baseline: worst_year_sharpe=0.2199 sharpe=1.0093 cagr=0.4696 meanY=0.9537 stdY=0.4029
+
+------------------------------------------------------------------------------------------
+TEST 1: Perturbation stability (multi-seed analog)
+------------------------------------------------------------------------------------------
+  run  0: worst_year_sharpe=+0.2199  sharpe=1.1106  cagr=0.5296  worst_year=2022
+  run  1: worst_year_sharpe=+0.0792  sharpe=1.0024  cagr=0.4641  worst_year=2018
+  run  2: worst_year_sharpe=-0.6009  sharpe=0.8333  cagr=0.3672  worst_year=2022
+  run  3: worst_year_sharpe=-0.4636  sharpe=0.9183  cagr=0.4056  worst_year=2022
+  run  4: worst_year_sharpe=+0.1758  sharpe=0.9607  cagr=0.4273  worst_year=2022
+  run  5: worst_year_sharpe=-0.6513  sharpe=1.0045  cagr=0.4780  worst_year=2022
+  run  6: worst_year_sharpe=+0.2708  sharpe=1.0850  cagr=0.5273  worst_year=2022
+  run  7: worst_year_sharpe=-0.0012  sharpe=1.0456  cagr=0.4876  worst_year=2022
+  run  8: worst_year_sharpe=+0.1256  sharpe=1.1269  cagr=0.5479  worst_year=2022
+  run  9: worst_year_sharpe=-0.0077  sharpe=0.9974  cagr=0.4687  worst_year=2022
+  run 10: worst_year_sharpe=+0.1794  sharpe=1.1619  cagr=0.5833  worst_year=2022
+  run 11: worst_year_sharpe=+0.1627  sharpe=1.1334  cagr=0.5391  worst_year=2022
+  -> worst_year_sharpe: mean=-0.0426 std=0.3178 (cv=745.7%)
+  -> sharpe:            mean=1.0317 std=0.0938 (cv=9.1%)  FAIL (>5% std/mean)
+  -> cagr:              mean=0.4855 std=0.0610
+  -> robust_score:      mean=0.6767 std=0.1066
+
+------------------------------------------------------------------------------------------
+TEST 2: Per-fold out-of-sample + per-seed worst-year breakdown
+------------------------------------------------------------------------------------------
+  Walk-forward folds: 32  (negative-OOS folds: 0)
+  split  0  train 1989-07-03..1994-06-01 (60 dates, stripped 1)  test 1994-07-01..1995-06-01 (12)  OOS_sharpe=+nan
+  split  1  train 1990-08-01..1995-06-01 (59 dates, stripped 1)  test 1995-07-03..1996-07-01 (13)  OOS_sharpe=+nan
+  split  2  train 1991-08-01..1996-07-01 (60 dates, stripped 1)  test 1996-08-01..1997-07-01 (12)  OOS_sharpe=+nan
+  split  3  train 1992-08-03..1997-07-01 (60 dates, stripped 1)  test 1997-08-01..1998-07-01 (12)  OOS_sharpe=+nan
+  split  4  train 1993-09-01..1998-07-01 (59 dates, stripped 1)  test 1998-08-03..1999-08-02 (13)  OOS_sharpe=+nan
+  split  5  train 1994-09-01..1999-08-02 (60 dates, stripped 1)  test 1999-09-01..2000-08-01 (12)  OOS_sharpe=+nan
+  split  6  train 1995-09-01..2000-08-01 (60 dates, stripped 1)  test 2000-09-01..2001-08-01 (12)  OOS_sharpe=+nan
+  split  7  train 1996-10-01..2001-08-01 (59 dates, stripped 1)  test 2001-09-04..2002-09-03 (13)  OOS_sharpe=+nan
+  split  8  train 1997-10-01..2002-09-03 (60 dates, stripped 1)  test 2002-10-01..2003-09-02 (12)  OOS_sharpe=+nan
+  split  9  train 1998-10-01..2003-09-02 (60 dates, stripped 1)  test 2003-10-01..2004-09-01 (12)  OOS_sharpe=+nan
+  split 10  train 1999-10-01..2004-09-01 (60 dates, stripped 1)  test 2004-10-01..2005-09-01 (12)  OOS_sharpe=+nan
+  split 11  train 2000-11-01..2005-09-01 (59 dates, stripped 1)  test 2005-10-03..2006-10-02 (13)  OOS_sharpe=+nan
+  split 12  train 2001-11-01..2006-10-02 (60 dates, stripped 1)  test 2006-11-01..2007-10-01 (12)  OOS_sharpe=+nan
+  split 13  train 2002-11-01..2007-10-01 (60 dates, stripped 1)  test 2007-11-01..2008-10-01 (12)  OOS_sharpe=+nan
+  split 14  train 2003-11-03..2008-10-01 (60 dates, stripped 1)  test 2008-11-03..2009-11-02 (13)  OOS_sharpe=+nan
+  split 15  train 2004-12-01..2009-11-02 (60 dates, stripped 1)  test 2009-12-01..2010-11-01 (12)  OOS_sharpe=+nan
+  split 16  train 2005-12-01..2010-11-01 (60 dates, stripped 1)  test 2010-12-01..2011-11-01 (12)  OOS_sharpe=+nan
+  split 17  train 2006-12-01..2011-11-01 (60 dates, stripped 1)  test 2011-12-01..2012-11-01 (12)  OOS_sharpe=+nan
+  split 18  train 2007-12-03..2012-11-01 (60 dates, stripped 1)  test 2012-12-03..2013-12-02 (13)  OOS_sharpe=+nan
+  split 19  train 2009-01-02..2013-12-02 (60 dates, stripped 1)  test 2014-01-02..2014-12-01 (12)  OOS_sharpe=+nan
+  split 20  train 2010-01-04..2014-12-01 (60 dates, stripped 1)  test 2015-01-02..2015-12-01 (12)  OOS_sharpe=+0.873
+  split 21  train 2011-02-01..2015-12-01 (59 dates, stripped 1)  test 2016-01-04..2017-01-03 (13)  OOS_sharpe=+1.569
+  split 22  train 2012-02-01..2017-01-03 (60 dates, stripped 1)  test 2017-02-01..2018-01-02 (12)  OOS_sharpe=+0.978
+  split 23  train 2013-02-01..2018-01-02 (60 dates, stripped 1)  test 2018-02-01..2019-01-02 (12)  OOS_sharpe=+0.393
+  split 24  train 2014-02-03..2019-01-02 (60 dates, stripped 1)  test 2019-02-01..2020-01-02 (12)  OOS_sharpe=+0.770
+  split 25  train 2015-03-02..2020-01-02 (59 dates, stripped 1)  test 2020-02-03..2021-02-01 (13)  OOS_sharpe=+2.418
+  split 26  train 2016-03-01..2021-02-01 (60 dates, stripped 1)  test 2021-03-01..2022-02-01 (12)  OOS_sharpe=+0.232
+  split 27  train 2017-03-01..2022-02-01 (60 dates, stripped 1)  test 2022-03-01..2023-02-01 (12)  OOS_sharpe=+0.129
+  split 28  train 2018-03-01..2023-02-01 (60 dates, stripped 1)  test 2023-03-01..2024-02-01 (12)  OOS_sharpe=+0.946
+  split 29  train 2019-03-01..2024-02-01 (60 dates, stripped 1)  test 2024-03-01..2025-02-03 (12)  OOS_sharpe=+1.313
+  split 30  train 2020-04-01..2025-02-03 (59 dates, stripped 1)  test 2025-03-03..2026-03-02 (13)  OOS_sharpe=+2.064
+  split 31  train 2021-04-01..2026-03-02 (60 dates, stripped 1)  test 2026-04-01..2026-06-01 (3)  OOS_sharpe=+5.771
+  Per-seed worst years: [2022, 2018, 2022, 2022, 2022, 2022, 2022, 2022, 2022, 2022, 2022, 2022]
+  -> OOS sharpe: min=+0.129 mean=+1.455 max=+5.771
+
+------------------------------------------------------------------------------------------
+TEST 3: Sub-period / regime analysis
+------------------------------------------------------------------------------------------
+  bull_2016_2017           sharpe=+1.319  n_days=503
+  bull_2023_2024           sharpe=+1.439  n_days=502
+  bear_2018                sharpe=+0.691  n_days=251
+  bear_2022                sharpe=+0.342  n_days=251
+  covid_crash_2020         sharpe=-4.183  n_days=24
+  covid_recovery_2020      sharpe=+2.398  n_days=197
+  high_vol_2020q1q2        sharpe=+1.482  n_days=125
+  weak_2025                sharpe=+1.132  n_days=250
+  -> bull mean=+1.379  bear mean=+0.516
+
+------------------------------------------------------------------------------------------
+TEST 4 & 5: Parameter + weight sensitivity (one-step tweaks)
+------------------------------------------------------------------------------------------
+  veto_threshold=0.75        worst_year=+0.2199  sharpe=1.0490  cagr=0.4950
+  veto_threshold=0.8         worst_year=+0.2199  sharpe=1.0093  cagr=0.4696
+  macro_half=-0.4            worst_year=+0.2199  sharpe=1.0093  cagr=0.4696
+  macro_half=-0.6            worst_year=+0.2199  sharpe=1.0093  cagr=0.4696
+  macro_flat=-0.8            worst_year=+0.2199  sharpe=1.0093  cagr=0.4696
+  macro_flat=-1.2            worst_year=+0.2199  sharpe=1.0093  cagr=0.4696
+  max_holdings=2             worst_year=+0.2199  sharpe=1.0093  cagr=0.4696
+  max_holdings=3             worst_year=-0.2751  sharpe=1.0426  cagr=0.4182
+  cost=0.0002                worst_year=+0.2210  sharpe=1.0123  cagr=0.4714
+  cost=0.0004                worst_year=+0.2187  sharpe=1.0064  cagr=0.4677
+  sma_fast=2                 worst_year=+0.2171  sharpe=1.0630  cagr=0.5040  [rebuild]
+  sma_fast=4                 worst_year=+0.2199  sharpe=1.0665  cagr=0.5045  [rebuild]
+  sma_slow=45                worst_year=+0.2199  sharpe=1.0080  cagr=0.4695  [rebuild]
+  sma_slow=55                worst_year=+0.2199  sharpe=1.0373  cagr=0.4878  [rebuild]
+  sma_trend=190              worst_year=+0.2171  sharpe=0.9641  cagr=0.4418  [rebuild]
+  sma_trend=210              worst_year=-0.6101  sharpe=0.9242  cagr=0.4135  [rebuild]
+  ts_mom=8                   worst_year=-0.5410  sharpe=0.8664  cagr=0.3813  [rebuild]
+  ts_mom=10                  worst_year=+0.3124  sharpe=0.9654  cagr=0.4431  [rebuild]
+  fund_group_w=0.02          worst_year=+0.2199  sharpe=1.0093  cagr=0.4696  [rebuild]
+  fund_group_w=0.04          worst_year=+0.2199  sharpe=1.0359  cagr=0.4814  [rebuild]
+  asset_growth=16.0          worst_year=+0.2199  sharpe=0.9989  cagr=0.4633  [rebuild]
+  asset_growth=24.0          worst_year=+0.2199  sharpe=1.0093  cagr=0.4696  [rebuild]
+  earnings_yield=2.0         worst_year=+0.2199  sharpe=1.0130  cagr=0.4717  [rebuild]
+  earnings_yield=4.0         worst_year=+0.2199  sharpe=0.9989  cagr=0.4633  [rebuild]
+  min_volume=10M             worst_year=+0.2199  sharpe=1.0093  cagr=0.4696  [rebuild]
+  min_volume=12M             worst_year=+0.2199  sharpe=1.0093  cagr=0.4696  [rebuild]
+  -> worst_year_sharpe spread = 0.9225  (max=+0.3124, min=-0.6101)
+  -> sharpe spread = 0.2001  collapse = 18.8%  WARN/FAIL (worst_year spread<0.5 & sharpe collapse<30%)
+
+------------------------------------------------------------------------------------------
+TEST 6: Walk-forward leak audit
+------------------------------------------------------------------------------------------
+  Splits with train_end >= test_start (overlap leak): 0  (expect 0)
+  Macro publication lag config: {'daily': 0, 'weekly': 10, 'monthly': 45}
+  _strip_leaky_train_dates total rows stripped across folds: 32
+  -> PASS (no train/test overlap; macro PIT lag configured)
+
+==========================================================================================
+SUMMARY
+==========================================================================================
+  T1 perturbation (sharpe cv<5%):        FAIL  (cv=9.1%)
+  T4/5 param sensitivity (spread/collapse): WARN  (w_spread=0.922, s_collapse=18.8%)
+  T6 leak audit:                         PASS
+  OVERALL: FAIL/WARN
+  runtime=650.1s
+METRIC chk_perturb_sharpe_cv=0.090957
+METRIC chk_perturb_worst_cv=7.457165
+METRIC chk_perturb_worst_std=0.317775
+METRIC chk_perturb_sharpe_std=0.093837
+METRIC chk_sens_worst_spread=0.922496
+METRIC chk_sens_sharpe_collapse=0.187599
+METRIC chk_leak_overlap=0
+METRIC chk_neg_oos_folds=0
+METRIC chk_oos_sharpe_min=0.129452
+METRIC chk_runtime=650.1
