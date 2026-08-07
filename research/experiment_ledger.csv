@@ -20,3 +20,6 @@ round,experiment_id,parent,branch,hypothesis,best_params,point_score,robust_mean
 3,531868c7-c5bd-41af-900a-85369999f86b,c9f419af-2bf3-42d5-aa4e-440425a0b7ea,orx/optuna-score-smoothing-persistence,score smoothing,smoothing=0.124796,0.6041975979,0.6357890497,0.0192631130,0.6109853684,reject
 3,948d5a6a-072f-443e-95f8-fef155261bff,c9f419af-2bf3-42d5-aa4e-440425a0b7ea,orx/optuna-asymmetric-persistence,asymmetric persistence,exit=0.124796,0.6861576718,0.6458854310,0.0285976829,0.6079447791,reject after audit
 3,98fac4de-4e52-457c-8a9d-d62099caaeab,c9f419af-2bf3-42d5-aa4e-440425a0b7ea,orx/optuna-minimum-holding-period,minimum holding period,sessions=19,0.6806455873,0.6568716575,0.0324448475,0.6099636957,inert reject
+5,872a7d07-1dfd-4000-b88c-415a066859fc,a7408cff-439c-43ed-aad3-33a1cc354673,orx/optuna-sector-concentration-cap,sector cap,cap=1/2 inert,0.7130542364,0.6693624259,0.0168496641,0.6493567672,reject inert
+5,debc750e-7a84-4096-a766-60bf9c0c2284,a7408cff-439c-43ed-aad3-33a1cc354673,orx/optuna-soft-score-weighting,soft score weights,power inert,0.7130640194,0.6693557454,0.0168624710,0.6493148656,reject inert
+5,63813b42-77a5-4b68-ae40-2c9e804657eb,a7408cff-439c-43ed-aad3-33a1cc354673,orx/optuna-confidence-conditioned-breadth,confidence breadth,threshold inert,0.7130492154,0.6693407055,0.0168650456,0.6492820933,reject inert

@@ -31,7 +31,7 @@ Nonlinear rank aggregation plus static persistence keeps validated base selectio
 
 ## Research Tree
 
-Optuna tested context length, forecast uncertainty sizing, continuous liquidity sizing, persistence strength, deadband, persistence plus uncertainty, adaptive persistence, score smoothing, asymmetric persistence, walk-forward training windows, minimum holding period, nonlinear rank aggregation, median consensus, macro-conditioned persistence, joint rank/persistence, factor-specific powers, and factor agreement. Nonlinear rank aggregation produced new robust leader. Adaptive persistence had high point score but catastrophic perturbation instability. Consensus and asymmetric candidates failed robust comparison. Macro, factor-specific, and agreement paths were inert.
+Optuna tested context length, forecast uncertainty sizing, continuous liquidity sizing, persistence strength, deadband, persistence plus uncertainty, adaptive persistence, score smoothing, asymmetric persistence, walk-forward training windows, minimum holding period, nonlinear rank aggregation, median consensus, macro-conditioned persistence, joint rank/persistence, factor-specific powers, factor agreement, sector concentration cap, soft score weighting, and confidence-conditioned breadth. Nonlinear rank aggregation produced robust leader. Adaptive persistence had high point score but catastrophic perturbation instability. Consensus and asymmetric candidates failed robust comparison. Macro, factor-specific, agreement, sector, soft-weight, and confidence-breadth paths were inert.
 
 Full IDs, branches, parameters, metrics, and decisions: `research/experiment_ledger.csv`.
 
@@ -50,4 +50,4 @@ Full IDs, branches, parameters, metrics, and decisions: `research/experiment_led
 bash .auto/measure.sh
 ```
 
-Run from commit on branch `orx/promoted-static-persistence-candidate`. Shared cache must be available at `/mnt/c/Users/User/Desktop/Test/Fundamental Momentum/cache` in WSL.
+Run from commit on branch `orx/promoted-nonlinear-rank-candidate`. Shared cache must be available at `/mnt/c/Users/User/Desktop/Test/Fundamental Momentum/cache` in WSL.
