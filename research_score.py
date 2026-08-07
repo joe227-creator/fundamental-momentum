@@ -294,6 +294,18 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
                 else 1.0
             )
 
+    soft_veto_scale = float(params.get("soft_veto_scale", 0.0))
+    if soft_veto_scale > 0.0:
+        for d in list(base_scores):
+            if d not in veto_mask.index:
+                continue
+            vet = veto_mask.loc[d]
+            vetoed = vet[vet].index.intersection(base_scores[d].index)
+            if len(vetoed) == 0:
+                continue
+            base_scores[d] = base_scores[d].copy()
+            base_scores[d].loc[vetoed] *= soft_veto_scale
+
     return {
         "params": params,
         "cfg": cfg,
