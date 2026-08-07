@@ -58,7 +58,11 @@ def run_optuna(config_path, params_path, reference_path, artifact_dir,
     def objective(trial):
         params = dict(fixed)
         params.update({name: _suggest(trial, name, spec) for name, spec in direction["search"].items()})
-        metrics, _ = _evaluate(config_path, base_params, params, baseline_turnover)
+        try:
+            metrics, _ = _evaluate(config_path, base_params, params, baseline_turnover)
+        except (ValueError, RuntimeError) as exc:
+            trial.set_user_attr("invalid_trial", str(exc))
+            raise optuna.TrialPruned()
         trial.set_user_attr("maximum_drawdown", metrics["maximum_drawdown"])
         trial.set_user_attr("turnover", metrics["turnover"])
         trial.report(metrics["research_score"], step=0)
