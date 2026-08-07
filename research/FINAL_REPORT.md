@@ -17,20 +17,21 @@ Evaluation uses 23 complete non-overlapping 126-session windows from 2015-01-02,
 
 ## Promoted Candidate
 
-Static persistence keeps validated base selection and gradually moves holdings toward each monthly target.
+Nonlinear rank aggregation plus static persistence keeps validated base selection while emphasizing strong cross-sectional factor ranks.
 
 - `rebalance_persistence=0.2872700594236812`.
-- Point score `0.6806187648`; mean window return `0.4400518225`; return-on-risk `0.8257742913`.
-- Win rate `0.8695652174`; max drawdown `-0.5328960070`; Sharpe `1.4396242880`.
-- Turnover `78.7676118414`; drawdown penalty included by fixed objective.
-- Ten-seed score mean `0.6486837050`; median `0.6526871073`; std `0.0322228874`; min `0.5819193522`; max `0.7108035343`.
-- Robust floor proxy `mean-1sd=0.6164608176`, narrowly above baseline point score.
-- Regime means: pre-COVID `0.276098`, COVID `0.609620`, post-COVID `0.584259`.
-- Final promoted-branch reproduction: score `0.6806700401`; perturb mean `0.6568753335`; perturb min `0.6099800264`; turnover `78.7655903000`.
+- `rank_power=1.9966462104925915`.
+- Point score `0.7130601543`; mean window return `0.4458845771`; return-on-risk `0.9009879030`.
+- Win rate `0.8695652174`; max drawdown `-0.4948840887`; Sharpe `1.4515913614`.
+- Turnover `65.6311684011`; drawdown penalty included by fixed objective.
+- Ten-seed score mean `0.6762969477`; median `0.6742146697`; std `0.0198114240`; min `0.6493130878`; max `0.7193872420`.
+- Every validation seed beats baseline score. Robust floor proxy `mean-1sd=0.6564855237`.
+- Regime means: pre-COVID `0.269314`, COVID `0.616127`, post-COVID `0.605475`.
+- Nonlinear promoted-branch reproduction expected to match validated score under fixed cache.
 
 ## Research Tree
 
-Optuna tested context length, forecast uncertainty sizing, continuous liquidity sizing, persistence strength, deadband, persistence plus uncertainty, adaptive persistence, score smoothing, asymmetric persistence, walk-forward training windows, and minimum holding period. Only static persistence produced a robustness-adjusted gain. Adaptive persistence had the highest point score but catastrophic perturbation instability. Asymmetric persistence improved point score but failed the `mean-1σ` gate. Minimum holding period was inert at monthly cadence.
+Optuna tested context length, forecast uncertainty sizing, continuous liquidity sizing, persistence strength, deadband, persistence plus uncertainty, adaptive persistence, score smoothing, asymmetric persistence, walk-forward training windows, minimum holding period, nonlinear rank aggregation, median consensus, macro-conditioned persistence, joint rank/persistence, factor-specific powers, and factor agreement. Nonlinear rank aggregation produced new robust leader. Adaptive persistence had high point score but catastrophic perturbation instability. Consensus and asymmetric candidates failed robust comparison. Macro, factor-specific, and agreement paths were inert.
 
 Full IDs, branches, parameters, metrics, and decisions: `research/experiment_ledger.csv`.
 

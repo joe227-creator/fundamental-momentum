@@ -1,4 +1,11 @@
 round,experiment_id,parent,branch,hypothesis,best_params,point_score,robust_mean,robust_std,robust_min,decision
+4,449639d9-832d-4812-8ab8-3749371ee8bc,befdb320-5a01-4772-8164-9fa36745a413,orx/optuna-nonlinear-rank-aggregation,nonlinear rank aggregation,rank_power=1.996646,0.7130386797,0.6693421309,0.0168623681,0.6492948626,validated winner
+4,3c8beb4f-a313-4dfb-a3fe-f5853880ef91,449639d9-832d-4812-8ab8-3749371ee8bc,orx/nonlinear-rank-robustness-audit,nonlinear rank 10 seed validation,rank_power=1.996646,0.7130601543,0.6762969477,0.0198114240,0.6493130878,accepted
+4,c81d4307-0201-4c4f-b6dd-41454c4f3a5c,befdb320-5a01-4772-8164-9fa36745a413,orx/optuna-robust-median-rank-consensus,median consensus,blend=0.731994,0.7065877666,0.6819385491,0.0233834025,0.6405813527,reject after audit
+4,3ed68b84-ee98-4e4e-a86b-23eaa35c6c9a,befdb320-5a01-4772-8164-9fa36745a413,orx/optuna-macro-conditioned-persistence,macro persistence multiplier,all inert,0.6806645770,0.6568750958,0.0324453227,0.6099666780,reject
+4,c2567478-4c8f-497b-b030-d11f7049706e,3c8beb4f-a313-4dfb-a3fe-f5853880ef91,orx/optuna-nonlinear-rank-persistence-joint,joint rank/persistence,rank=1.656019 persistence=0.154598,0.7044856247,0.6568043280,0.0353793106,0.5957496830,reject
+4,b8051fa6-43fc-4409-baa2-5012192ee696,3c8beb4f-a313-4dfb-a3fe-f5853880ef91,orx/optuna-factor-specific-rank-powers,factor-specific curvature,all inert,0.7130686868,0.6693595272,0.0168621988,0.6492976534,reject inert
+4,a98a310d-ea9f-4e4e-82ec-5d04c8bced2c,3c8beb4f-a313-4dfb-a3fe-f5853880ef91,orx/optuna-factor-agreement-blend,factor agreement,all inert,0.7130636525,0.6693719407,0.0168566668,0.6493662882,reject inert
 0,316058b8-7191-4747-bcd7-c9cff510688d,,orx/baseline,frozen control,,0.6149878552,0.5740708711,0.0430848490,0.5008842863,baseline
 1,30eee3f4-a25b-471f-84a9-43076f9f5866,316058b8-7191-4747-bcd7-c9cff510688d,orx/optuna-timesfm-context-length,forecast context length,512:0.588788;256:0.614981,0.6149811722,0.5740728251,0.0430813989,0.5008942519,reject
 1,fd77eba0-c835-4dfb-b3d3-d43b36c6691d,316058b8-7191-4747-bcd7-c9cff510688d,orx/optuna-forecast-uncertainty-sizing,quantile uncertainty sizing,power=0.311989,0.6124011062,0.5977782331,0.0275190087,0.5624496579,reject

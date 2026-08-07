@@ -1,9 +1,0 @@
-{
-  "name": "nonlinear-rank-aggregation",
-  "study_name": "nonlinear_rank_aggregation",
-  "n_trials": 6,
-  "seed": 42,
-  "search": {
-    "rank_power": {"type": "float", "low": 0.5, "high": 3.0}
-  }
-}
