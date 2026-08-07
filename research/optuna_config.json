@@ -1,0 +1,9 @@
+{
+  "name": "soft-score-weighting",
+  "study_name": "soft_score_weighting",
+  "n_trials": 6,
+  "seed": 42,
+  "search": {
+    "score_weight_power": {"type": "float", "low": 0.0, "high": 3.0}
+  }
+}
