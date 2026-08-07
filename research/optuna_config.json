@@ -1,9 +1,9 @@
 {
-  "name": "nonlinear-rank-aggregation",
-  "study_name": "nonlinear_rank_aggregation",
+  "name": "factor-agreement-blend",
+  "study_name": "factor_agreement_blend",
   "n_trials": 6,
   "seed": 42,
   "search": {
-    "rank_power": {"type": "float", "low": 0.5, "high": 3.0}
+    "agreement_blend": {"type": "float", "low": 0.0, "high": 0.5}
   }
 }
