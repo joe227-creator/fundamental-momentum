@@ -261,6 +261,7 @@ def run_weighted_backtest(
     initial_capital: float | None = None,
     start_date: pd.Timestamp | str | None = None,
     rebalance_persistence: float = 0.0,
+    minimum_holding_sessions: int = 0,
 ) -> dict[str, Any]:
     """Simulate equity with per-position target weights (fraction of equity).
 
@@ -291,6 +292,15 @@ def run_weighted_backtest(
         target = weighted_selection.get(ts)
         if target is not None:
             target = {s: float(w) for s, w in target.items() if s in context.prices.close.columns and w > 0}
+            if minimum_holding_sessions > 0 and holdings:
+                session_position = sessions.searchsorted(ts)
+                locked = any(
+                    session_position - sessions.searchsorted(pd.Timestamp(h["entry_date"]))
+                    < minimum_holding_sessions
+                    for h in holdings.values()
+                )
+                if locked:
+                    target = None
             # Skip rebalance if target matches current holdings (avoids unnecessary turnover)
             if target and rebalance_persistence <= 0 and set(target.keys()) == set(holdings.keys()):
                 target = None
