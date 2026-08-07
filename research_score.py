@@ -183,6 +183,37 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         use_relative_veto=bool(params.get("use_relative_veto", False)),
         relative_veto_pct=float(params.get("relative_veto_pct", 0.05)),
     )
+    momentum_blend = float(np.clip(params.get("momentum_blend", 0.0), 0.0, 1.0))
+    if momentum_blend > 0.0 and "ts_momentum" in state.ranked_factors:
+        from algo_trading.indicators import time_series_momentum, cross_sectional_rank
+        alt_lookback = int(params.get("momentum_alt_lookback", 6))
+        alt_mom = time_series_momentum(ctx.prices.close, alt_lookback, 0)
+        alt_ranked = cross_sectional_rank(alt_mom)
+        orig_ranked = state.ranked_factors["ts_momentum"]
+        aligned = alt_ranked.reindex_like(orig_ranked).fillna(0.0)
+        blended = (1.0 - momentum_blend) * orig_ranked + momentum_blend * aligned
+        state.ranked_factors["ts_momentum"] = blended
+        for date in list(base_scores):
+            split_index = state.split_for_date.get(date)
+            if split_index is None:
+                continue
+            composite = pd.Series(0.0, index=state.base_mask.columns, dtype=float)
+            weights = state.weights_by_split[split_index]
+            for factor_name in state.factor_names:
+                if factor_name not in weights or factor_name not in state.ranked_factors:
+                    continue
+                frame = state.ranked_factors[factor_name]
+                if date not in frame.index:
+                    continue
+                composite = composite.add(
+                    frame.loc[date].fillna(0.0) * weights[factor_name], fill_value=0.0
+                )
+            eligible = state.base_mask.loc[date].fillna(False)
+            composite = composite[eligible].replace([np.inf, -np.inf], np.nan).dropna()
+            if bool(params.get("require_positive_composite", True)):
+                composite = composite[composite > 0.0]
+            base_scores[date] = composite.sort_values(ascending=False)
+
     rank_power = float(params.get("rank_power", 1.0))
     if rank_power != 1.0:
         transformed_scores: dict[pd.Timestamp, pd.Series] = {}
@@ -419,6 +450,21 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--bootstrap-baseline-reference", action="store_true")
     args = parser.parse_args()
+
+    optuna_config = Path("research/optuna_config.json")
+    if optuna_config.exists():
+        from research.optuna_runner import run_optuna
+
+        return run_optuna(
+            config_path=args.config,
+            params_path=args.params,
+            reference_path=args.reference,
+            artifact_dir=args.artifact_dir,
+            optuna_config_path=str(optuna_config),
+            perturb_runs=args.perturb_runs,
+            perturb_sigma=args.perturb_sigma,
+            seed=args.seed,
+        )
 
     prepared = _prepare_strategy(args.config, args.params)
     base_selection = _select(prepared)

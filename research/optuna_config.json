@@ -1,0 +1,9 @@
+{
+  "name": "multi-lookback-momentum-blend",
+  "study_name": "multi_lookback_momentum_blend",
+  "n_trials": 6,
+  "seed": 42,
+  "search": {
+    "momentum_blend": {"type": "float", "low": 0.0, "high": 1.0}
+  }
+}
