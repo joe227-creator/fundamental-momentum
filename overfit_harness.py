@@ -202,7 +202,9 @@ def _size_weights(scores: pd.Series, N: int, d: pd.Timestamp,
                   vol_prior_frame: pd.DataFrame | None, vol_scaled: bool,
                   weight_tilt: float = 0.0, conf_tilt: bool = False,
                   median_gap=None, conf_tilt_pow: float = 1.0,
-                  conf_tilt_vol: bool = False, vol_factor_map=None) -> dict[str, float]:
+                  conf_tilt_vol: bool = False, vol_factor_map=None,
+                  liquidity_ratio_frame: pd.DataFrame | None = None,
+                  liquidity_power: float = 0.0) -> dict[str, float]:
     """Top-N sizing. Equal weight by default; inverse-vol weight across the
     top-N when vol_scaled (risk-balanced sizing, targets drawdown reduction).
     If weight_tilt>0: shift that fraction of weight from the lower-ranked names
@@ -242,6 +244,20 @@ def _size_weights(scores: pd.Series, N: int, d: pd.Timestamp,
             w[top[0]] = min(1.0, w[top[0]] + eff)
             for sym in top[1:]:
                 w[sym] = max(0.0, w[sym] - per)
+    if liquidity_power > 0 and liquidity_ratio_frame is not None and d in liquidity_ratio_frame.index:
+        ratios = liquidity_ratio_frame.loc[d].dropna()
+        median_ratio = float(ratios.median()) if not ratios.empty else np.nan
+        selected_ratios = ratios.reindex(top)
+        if np.isfinite(median_ratio) and median_ratio > 0:
+            normalized = (selected_ratios / median_ratio).clip(0.25, 4.0)
+            adjusted = {
+                sym: weight * float(normalized.get(sym, 1.0) ** liquidity_power)
+                for sym, weight in w.items()
+            }
+            total = float(sum(adjusted.values()))
+            target_total = float(sum(w.values()))
+            if total > 0:
+                w = {sym: value * target_total / total for sym, value in adjusted.items()}
     return w
 
 
@@ -284,7 +300,8 @@ def apply_veto_and_select(base_scores, veto_mask, N, rng=None, perturb_sigma=0.0
                           corr_sessions=None, weight_tilt: float = 0.0,
                           conf_tilt: bool = False, median_gap=None,
                           conf_tilt_pow: float = 1.0, conf_tilt_vol: bool = False,
-                          vol_factor_map=None):
+                          vol_factor_map=None, liquidity_ratio_frame=None,
+                          liquidity_power: float = 0.0):
     """Build weighted selection dict. If perturb_sigma>0, add Gaussian noise to
     each date's composite scores (deterministic-strategy perturbation analog).
     If corr_threshold>0: apply the correlation-diversification filter (top-1 +
@@ -302,7 +319,8 @@ def apply_veto_and_select(base_scores, veto_mask, N, rng=None, perturb_sigma=0.0
         if corr_threshold > 0 and N >= 2:
             sc2 = _apply_corr_filter(sc2, d, corr_threshold, rets_panel, corr_prior_map, corr_sessions)
         wsel[d] = _size_weights(sc2, N, d, vol_prior_frame, vol_scaled, weight_tilt,
-                                conf_tilt, median_gap, conf_tilt_pow, conf_tilt_vol, vol_factor_map)
+                                conf_tilt, median_gap, conf_tilt_pow, conf_tilt_vol,
+                                vol_factor_map, liquidity_ratio_frame, liquidity_power)
     return wsel
 
 

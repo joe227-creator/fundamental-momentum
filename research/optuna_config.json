@@ -1,0 +1,14 @@
+{
+  "name": "continuous-liquidity-sizing",
+  "study_name": "continuous_liquidity_sizing",
+  "n_trials": 6,
+  "seed": 42,
+  "fixed": {
+    "use_quantile_veto": true,
+    "quantile_col": 1,
+    "veto_horizon": 21
+  },
+  "search": {
+    "liquidity_power": {"type": "float", "low": 0.0, "high": 2.0}
+  }
+}

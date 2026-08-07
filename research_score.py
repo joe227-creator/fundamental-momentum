@@ -163,6 +163,24 @@ def _load_predictions(params: dict[str, Any]) -> tuple[pd.DataFrame, int]:
     return predicted.unstack(level="symbol"), context_len
 
 
+def _load_liquidity_ratio(
+    predicted: pd.DataFrame,
+    ctx,
+    dates: list[pd.Timestamp],
+    prior_ends: list[pd.Timestamp],
+    trailing_window: int,
+    power: float,
+) -> pd.DataFrame | None:
+    """Return forecast/trailing-volume ratios for optional continuous sizing."""
+    if power <= 0.0:
+        return None
+    trailing = ctx.prices.volume.rolling(trailing_window, min_periods=1).mean()
+    trailing_rows = trailing.reindex(prior_ends)
+    trailing_rows.index = pd.DatetimeIndex(dates)
+    predicted_rows = predicted.reindex(pd.DatetimeIndex(dates), method="ffill")
+    return predicted_rows.div(trailing_rows).replace([np.inf, -np.inf], np.nan)
+
+
 def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
     params = json.loads(Path(params_path).read_text(encoding="utf-8"))
     oh.CTX = int(params.get("forecast_context_len", 256))
@@ -182,6 +200,10 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         trailing_window,
         use_relative_veto=bool(params.get("use_relative_veto", False)),
         relative_veto_pct=float(params.get("relative_veto_pct", 0.05)),
+    )
+    liquidity_power = float(params.get("liquidity_power", 0.0))
+    liquidity_ratio_frame = _load_liquidity_ratio(
+        predicted, ctx, dates, prior_ends, trailing_window, liquidity_power
     )
 
     # Optional return-forecast tilt, retained for isolated ablations already
@@ -287,6 +309,8 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         "conf_tilt_pow": float(params.get("conf_tilt_pow", 1.0)),
         "conf_tilt_vol": bool(params.get("conf_tilt_vol", False)),
         "vol_factor_map": vol_factor_map,
+        "liquidity_ratio_frame": liquidity_ratio_frame,
+        "liquidity_power": liquidity_power,
         "regime_scale": regime_scale,
         "prior_ends": prior_ends,
         "dates": dates,
@@ -313,6 +337,8 @@ def _select(prepared: dict[str, Any], seed: int | None = None, sigma: float = 0.
         conf_tilt_pow=prepared["conf_tilt_pow"],
         conf_tilt_vol=prepared["conf_tilt_vol"],
         vol_factor_map=prepared["vol_factor_map"],
+        liquidity_ratio_frame=prepared["liquidity_ratio_frame"],
+        liquidity_power=prepared["liquidity_power"],
     )
     if prepared["regime_scale"] is not None:
         selected = {
@@ -389,6 +415,21 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--bootstrap-baseline-reference", action="store_true")
     args = parser.parse_args()
+
+    optuna_config = Path("research/optuna_config.json")
+    if optuna_config.exists():
+        from research.optuna_runner import run_optuna
+
+        return run_optuna(
+            config_path=args.config,
+            params_path=args.params,
+            reference_path=args.reference,
+            artifact_dir=args.artifact_dir,
+            optuna_config_path=str(optuna_config),
+            perturb_runs=args.perturb_runs,
+            perturb_sigma=args.perturb_sigma,
+            seed=args.seed,
+        )
 
     prepared = _prepare_strategy(args.config, args.params)
     base_selection = _select(prepared)
