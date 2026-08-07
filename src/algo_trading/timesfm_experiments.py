@@ -261,6 +261,7 @@ def run_weighted_backtest(
     initial_capital: float | None = None,
     start_date: pd.Timestamp | str | None = None,
     rebalance_persistence: float = 0.0,
+    rebalance_deadband: float = 0.0,
 ) -> dict[str, Any]:
     """Simulate equity with per-position target weights (fraction of equity).
 
@@ -294,6 +295,30 @@ def run_weighted_backtest(
             # Skip rebalance if target matches current holdings (avoids unnecessary turnover)
             if target and rebalance_persistence <= 0 and set(target.keys()) == set(holdings.keys()):
                 target = None
+            if target is not None and rebalance_deadband > 0 and rebalance_persistence > 0 and holdings:
+                open_prices = {s: _trade_price(context, ts, s, "open") for s in list(holdings) + list(target)}
+                eq_open = cash + sum(
+                    h["shares"] * open_prices[s]
+                    for s, h in holdings.items()
+                    if not np.isnan(open_prices.get(s, np.nan))
+                )
+                if eq_open > 0:
+                    total_w = sum(target.values())
+                    target_weights = {
+                        s: float(w) / total_w for s, w in target.items()
+                    } if total_w > 0 else {}
+                    current_weights = {
+                        s: h["shares"] * open_prices[s] / eq_open
+                        for s, h in holdings.items()
+                        if not np.isnan(open_prices.get(s, np.nan))
+                    }
+                    symbols = set(target_weights) | set(current_weights)
+                    distance = sum(
+                        abs(target_weights.get(s, 0.0) - current_weights.get(s, 0.0))
+                        for s in symbols
+                    )
+                    if distance <= rebalance_deadband:
+                        target = None
         if target is not None:
             sel_rows.append({"date": ts, "symbols": ",".join(target.keys()), "num_symbols": len(target), "weights": json.dumps(target, default=str)})
 
