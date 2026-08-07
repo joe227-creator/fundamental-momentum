@@ -1,6 +1,6 @@
 {
-  "name": "position-persistence",
-  "study_name": "position_persistence",
+  "name": "persistence-strength-bracket",
+  "study_name": "persistence_strength_bracket",
   "n_trials": 6,
   "seed": 42,
   "fixed": {
@@ -9,6 +9,6 @@
     "veto_horizon": 21
   },
   "search": {
-    "rebalance_persistence": {"type": "float", "low": 0.0, "high": 0.9}
+    "rebalance_persistence": {"type": "float", "low": 0.1, "high": 0.6}
   }
 }
