@@ -419,6 +419,10 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--bootstrap-baseline-reference", action="store_true")
     args = parser.parse_args()
+    optuna_config = Path("research/optuna_config.json")
+    if optuna_config.exists():
+        from research.optuna_runner import run_optuna
+        return run_optuna(args.config,args.params,args.reference,args.artifact_dir,str(optuna_config),args.perturb_runs,args.perturb_sigma,args.seed)
 
     prepared = _prepare_strategy(args.config, args.params)
     base_selection = _select(prepared)

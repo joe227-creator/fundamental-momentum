@@ -1,0 +1,9 @@
+{
+  "name": "confidence-conditioned-breadth",
+  "study_name": "confidence_conditioned_breadth",
+  "n_trials": 6,
+  "seed": 42,
+  "search": {
+    "breadth_threshold": {"type": "float", "low": 0.0, "high": 0.5}
+  }
+}

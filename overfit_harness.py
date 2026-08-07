@@ -284,7 +284,7 @@ def apply_veto_and_select(base_scores, veto_mask, N, rng=None, perturb_sigma=0.0
                           corr_sessions=None, weight_tilt: float = 0.0,
                           conf_tilt: bool = False, median_gap=None,
                           conf_tilt_pow: float = 1.0, conf_tilt_vol: bool = False,
-                          vol_factor_map=None):
+                          vol_factor_map=None, breadth_threshold=None):
     """Build weighted selection dict. If perturb_sigma>0, add Gaussian noise to
     each date's composite scores (deterministic-strategy perturbation analog).
     If corr_threshold>0: apply the correlation-diversification filter (top-1 +
@@ -299,9 +299,13 @@ def apply_veto_and_select(base_scores, veto_mask, N, rng=None, perturb_sigma=0.0
         vet = veto_mask.loc[d]
         vetoed = set(vet[vet].index) & set(sc.index) if d in veto_mask.index else set()
         sc2 = sc.drop(index=[s for s in vetoed if s in sc.index])
+        date_n = N
+        if breadth_threshold is not None and N >= 2 and len(sc2) >= 2:
+            ordered = sc2.sort_values(ascending=False)
+            date_n = 1 if float(ordered.iloc[0] - ordered.iloc[1]) >= breadth_threshold else N
         if corr_threshold > 0 and N >= 2:
             sc2 = _apply_corr_filter(sc2, d, corr_threshold, rets_panel, corr_prior_map, corr_sessions)
-        wsel[d] = _size_weights(sc2, N, d, vol_prior_frame, vol_scaled, weight_tilt,
+        wsel[d] = _size_weights(sc2, date_n, d, vol_prior_frame, vol_scaled, weight_tilt,
                                 conf_tilt, median_gap, conf_tilt_pow, conf_tilt_vol, vol_factor_map)
     return wsel
 
