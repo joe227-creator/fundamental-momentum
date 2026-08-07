@@ -1,14 +1,15 @@
 {
-  "name": "persistence-strength-bracket",
-  "study_name": "persistence_strength_bracket",
+  "name": "asymmetric-persistence",
+  "study_name": "asymmetric_persistence",
   "n_trials": 6,
   "seed": 42,
   "fixed": {
     "use_quantile_veto": true,
     "quantile_col": 1,
-    "veto_horizon": 21
+    "veto_horizon": 21,
+    "rebalance_persistence": 0.2872700594236812
   },
   "search": {
-    "rebalance_persistence": {"type": "float", "low": 0.1, "high": 0.6}
+    "rebalance_exit_persistence": {"type": "float", "low": 0.0, "high": 0.8}
   }
 }

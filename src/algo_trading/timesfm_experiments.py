@@ -261,6 +261,7 @@ def run_weighted_backtest(
     initial_capital: float | None = None,
     start_date: pd.Timestamp | str | None = None,
     rebalance_persistence: float = 0.0,
+    rebalance_exit_persistence: float | None = None,
 ) -> dict[str, Any]:
     """Simulate equity with per-position target weights (fraction of equity).
 
@@ -303,6 +304,11 @@ def run_weighted_backtest(
             # close positions not in target (and liquidate to hit target weights)
             eq_open = cash + sum(h["shares"] * open_prices[s] for s, h in holdings.items() if not np.isnan(open_prices.get(s, np.nan)))
             persistent = float(np.clip(rebalance_persistence, 0.0, 1.0))
+            exit_persistent = float(np.clip(
+                rebalance_persistence if rebalance_exit_persistence is None else rebalance_exit_persistence,
+                0.0,
+                1.0,
+            ))
             if persistent > 0 and holdings and eq_open > 0:
                 total_w = sum(target.values())
                 if total_w > 1.0 + 1e-9:
@@ -315,7 +321,9 @@ def run_weighted_backtest(
                 current_weights = {s: value / eq_open for s, value in current_values.items()}
                 symbols = set(current_weights) | set(target)
                 desired_weights = {
-                    s: persistent * current_weights.get(s, 0.0)
+                    s: (
+                        exit_persistent if s in current_weights and s not in target else persistent
+                    ) * current_weights.get(s, 0.0)
                     + (1.0 - persistent) * target.get(s, 0.0)
                     for s in symbols
                 }

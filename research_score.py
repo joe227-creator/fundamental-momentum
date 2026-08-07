@@ -331,6 +331,7 @@ def _evaluate_result(prepared: dict[str, Any], selection: dict[pd.Timestamp, dic
         tc_rate=float(params.get("cost_per_side", 0.0003)),
         start_date=START_DATE,
         rebalance_persistence=float(params.get("rebalance_persistence", 0.0)),
+        rebalance_exit_persistence=params.get("rebalance_exit_persistence"),
     )
     equity = result["equity_curve"]["equity"].dropna()
     if equity.empty or not equity.index.is_monotonic_increasing or (equity <= 0).any():
