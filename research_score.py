@@ -183,6 +183,34 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         use_relative_veto=bool(params.get("use_relative_veto", False)),
         relative_veto_pct=float(params.get("relative_veto_pct", 0.05)),
     )
+    rank_power = float(params.get("rank_power", 1.0))
+    if rank_power != 1.0:
+        transformed_scores: dict[pd.Timestamp, pd.Series] = {}
+        for date in dates:
+            if date not in base_scores:
+                continue
+            split_index = state.split_for_date.get(date)
+            if split_index is None:
+                continue
+            composite = pd.Series(0.0, index=state.base_mask.columns, dtype=float)
+            weights = state.weights_by_split[split_index]
+            for factor_name in state.factor_names:
+                if factor_name not in weights or factor_name not in state.ranked_factors:
+                    continue
+                frame = state.ranked_factors[factor_name]
+                if date not in frame.index:
+                    continue
+                centered_rank = frame.loc[date].fillna(0.0)
+                transformed_rank = np.sign(centered_rank) * np.abs(centered_rank) ** rank_power
+                composite = composite.add(
+                    transformed_rank * weights[factor_name], fill_value=0.0
+                )
+            eligible = state.base_mask.loc[date].fillna(False)
+            composite = composite[eligible].replace([np.inf, -np.inf], np.nan).dropna()
+            if bool(params.get("require_positive_composite", True)):
+                composite = composite[composite > 0.0]
+            transformed_scores[date] = composite.sort_values(ascending=False)
+        base_scores = transformed_scores
 
     # Optional return-forecast tilt, retained for isolated ablations already
     # supported by the existing harness.
@@ -287,6 +315,7 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         "conf_tilt_pow": float(params.get("conf_tilt_pow", 1.0)),
         "conf_tilt_vol": bool(params.get("conf_tilt_vol", False)),
         "vol_factor_map": vol_factor_map,
+        "rank_power": rank_power,
         "regime_scale": regime_scale,
         "prior_ends": prior_ends,
         "dates": dates,
@@ -390,6 +419,21 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--bootstrap-baseline-reference", action="store_true")
     args = parser.parse_args()
+
+    optuna_config = Path("research/optuna_config.json")
+    if optuna_config.exists():
+        from research.optuna_runner import run_optuna
+
+        return run_optuna(
+            config_path=args.config,
+            params_path=args.params,
+            reference_path=args.reference,
+            artifact_dir=args.artifact_dir,
+            optuna_config_path=str(optuna_config),
+            perturb_runs=args.perturb_runs,
+            perturb_sigma=args.perturb_sigma,
+            seed=args.seed,
+        )
 
     prepared = _prepare_strategy(args.config, args.params)
     base_selection = _select(prepared)
