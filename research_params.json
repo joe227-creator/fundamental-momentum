@@ -47,5 +47,6 @@
   "conf_tilt": true,
   "conf_tilt_pow": 50.0,
   "conf_tilt_vol": true,
-  "conf_tilt_vol_pow": 4.0
+  "conf_tilt_vol_pow": 4.0,
+  "rebalance_persistence": 0.2872700594236812
 }

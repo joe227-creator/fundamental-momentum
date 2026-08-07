@@ -1,0 +1,15 @@
+round,experiment_id,parent,branch,hypothesis,best_params,point_score,robust_mean,robust_std,robust_min,decision
+0,316058b8-7191-4747-bcd7-c9cff510688d,,orx/baseline,frozen control,,0.6149878552,0.5740708711,0.0430848490,0.5008842863,baseline
+1,30eee3f4-a25b-471f-84a9-43076f9f5866,316058b8-7191-4747-bcd7-c9cff510688d,orx/optuna-timesfm-context-length,forecast context length,512:0.588788;256:0.614981,0.6149811722,0.5740728251,0.0430813989,0.5008942519,reject
+1,fd77eba0-c835-4dfb-b3d3-d43b36c6691d,316058b8-7191-4747-bcd7-c9cff510688d,orx/optuna-forecast-uncertainty-sizing,quantile uncertainty sizing,power=0.311989,0.6124011062,0.5977782331,0.0275190087,0.5624496579,reject
+1,846477af-4e90-4e11-af7e-66164e89c7ce,316058b8-7191-4747-bcd7-c9cff510688d,orx/optuna-continuous-liquidity-sizing,continuous liquidity sizing,power=0.311989,0.4746153995,0.5465083044,0.0941965941,0.3625199080,reject
+1,5921e0c8-aea8-4d8d-a11b-7e681dd3aaa3,316058b8-7191-4747-bcd7-c9cff510688d,orx/optuna-position-persistence,persistence execution,persistence=0.337086,0.6739467336,0.6511033743,0.0315173000,0.6052900842,provisional
+1,33a2e3dc-f238-4405-840e-b35249de367f,316058b8-7191-4747-bcd7-c9cff510688d,orx/optuna-walk-forward-training-window,walk-forward training window,various inert,0.6149811722,0.5740728251,0.0430813989,0.5008942519,reject
+2,b402bb5a-3aba-4dce-9b13-62ebc33eceb6,5921e0c8-aea8-4d8d-a11b-7e681dd3aaa3,orx/optuna-persistence-strength-bracket,persistence refinement,persistence=0.287270,0.6806496000,0.6568824941,0.0324431075,0.6099823718,provisional
+2,b09c846b-b573-475f-ae91-6bb1b5bc9b96,5921e0c8-aea8-4d8d-a11b-7e681dd3aaa3,orx/optuna-persistence-deadband,rebalance deadband,deadband=0.146399,0.6755449916,0.6510056996,0.0317374121,0.6045587963,reject
+2,19d6b893-90fe-4099-93c1-3d5533a4e2b7,5921e0c8-aea8-4d8d-a11b-7e681dd3aaa3,orx/optuna-persistence-plus-uncertainty,persistence plus uncertainty,power=0.093597,0.6736858881,0.6511480361,0.0315473477,0.6055991554,reject
+3,c9f419af-2bf3-42d5-aa4e-440425a0b7ea,b402bb5a-3aba-4dce-9b13-62ebc33eceb6,orx/refined-persistence-robustness-audit,10 seed validation,persistence=0.287270,0.6806187648,0.6486837050,0.0322228874,0.5819193522,accepted
+3,28bdcdef-84ec-4d32-8426-4f4aa934d4cc,c9f419af-2bf3-42d5-aa4e-440425a0b7ea,orx/optuna-confidence-adaptive-persistence,confidence adaptive persistence,power=2.852143,0.6900633696,0.3362622597,0.6341064526,-0.9304415508,reject
+3,531868c7-c5bd-41af-900a-85369999f86b,c9f419af-2bf3-42d5-aa4e-440425a0b7ea,orx/optuna-score-smoothing-persistence,score smoothing,smoothing=0.124796,0.6041975979,0.6357890497,0.0192631130,0.6109853684,reject
+3,948d5a6a-072f-443e-95f8-fef155261bff,c9f419af-2bf3-42d5-aa4e-440425a0b7ea,orx/optuna-asymmetric-persistence,asymmetric persistence,exit=0.124796,0.6861576718,0.6458854310,0.0285976829,0.6079447791,reject after audit
+3,98fac4de-4e52-457c-8a9d-d62099caaeab,c9f419af-2bf3-42d5-aa4e-440425a0b7ea,orx/optuna-minimum-holding-period,minimum holding period,sessions=19,0.6806455873,0.6568716575,0.0324448475,0.6099636957,inert reject
