@@ -330,6 +330,7 @@ def _evaluate_result(prepared: dict[str, Any], selection: dict[pd.Timestamp, dic
         prepared["cfg"],
         tc_rate=float(params.get("cost_per_side", 0.0003)),
         start_date=START_DATE,
+        rebalance_persistence=float(params.get("rebalance_persistence", 0.0)),
     )
     equity = result["equity_curve"]["equity"].dropna()
     if equity.empty or not equity.index.is_monotonic_increasing or (equity <= 0).any():
@@ -389,6 +390,21 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--bootstrap-baseline-reference", action="store_true")
     args = parser.parse_args()
+
+    optuna_config = Path("research/optuna_config.json")
+    if optuna_config.exists():
+        from research.optuna_runner import run_optuna
+
+        return run_optuna(
+            config_path=args.config,
+            params_path=args.params,
+            reference_path=args.reference,
+            artifact_dir=args.artifact_dir,
+            optuna_config_path=str(optuna_config),
+            perturb_runs=args.perturb_runs,
+            perturb_sigma=args.perturb_sigma,
+            seed=args.seed,
+        )
 
     prepared = _prepare_strategy(args.config, args.params)
     base_selection = _select(prepared)

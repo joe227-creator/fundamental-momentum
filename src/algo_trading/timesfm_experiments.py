@@ -260,6 +260,7 @@ def run_weighted_backtest(
     tc_rate: float = TC_PER_SIDE,
     initial_capital: float | None = None,
     start_date: pd.Timestamp | str | None = None,
+    rebalance_persistence: float = 0.0,
 ) -> dict[str, Any]:
     """Simulate equity with per-position target weights (fraction of equity).
 
@@ -291,7 +292,7 @@ def run_weighted_backtest(
         if target is not None:
             target = {s: float(w) for s, w in target.items() if s in context.prices.close.columns and w > 0}
             # Skip rebalance if target matches current holdings (avoids unnecessary turnover)
-            if target and set(target.keys()) == set(holdings.keys()):
+            if target and rebalance_persistence <= 0 and set(target.keys()) == set(holdings.keys()):
                 target = None
         if target is not None:
             sel_rows.append({"date": ts, "symbols": ",".join(target.keys()), "num_symbols": len(target), "weights": json.dumps(target, default=str)})
@@ -301,34 +302,95 @@ def run_weighted_backtest(
 
             # close positions not in target (and liquidate to hit target weights)
             eq_open = cash + sum(h["shares"] * open_prices[s] for s, h in holdings.items() if not np.isnan(open_prices.get(s, np.nan)))
-            # Sell everything first (full turnover to target weights), then buy
-            for s in list(holdings):
-                px = open_prices.get(s, np.nan)
-                if np.isnan(px):
-                    continue
-                h = holdings.pop(s)
-                gross = h["shares"] * px
-                fee = gross * tc_rate
-                cash += gross - fee
-                trade_rows.append({"date": ts, "action": "SELL", "symbol": s, "shares": h["shares"], "price": px, "gross_value": gross, "fee": fee, "pnl": (gross - fee) - h["cost_basis"], "reason": "rebalance"})
-            # Buy target weights
-            if target:
+            persistent = float(np.clip(rebalance_persistence, 0.0, 1.0))
+            if persistent > 0 and holdings and eq_open > 0:
                 total_w = sum(target.values())
                 if total_w > 1.0 + 1e-9:
                     target = {s: w / total_w for s, w in target.items()}
-                for s, w in target.items():
+                current_values = {
+                    s: h["shares"] * open_prices[s]
+                    for s, h in holdings.items()
+                    if not np.isnan(open_prices.get(s, np.nan))
+                }
+                current_weights = {s: value / eq_open for s, value in current_values.items()}
+                symbols = set(current_weights) | set(target)
+                desired_weights = {
+                    s: persistent * current_weights.get(s, 0.0)
+                    + (1.0 - persistent) * target.get(s, 0.0)
+                    for s in symbols
+                }
+                desired_values = {s: eq_open * w for s, w in desired_weights.items()}
+
+                # Sell excess first, then buy deficits. Preserve overlap while
+                # making transaction-cost savings measurable.
+                for s in list(holdings):
                     px = open_prices.get(s, np.nan)
                     if np.isnan(px) or px <= 0:
                         continue
-                    target_capital = cash * float(w)
-                    fee = target_capital * tc_rate
-                    investable = target_capital - fee
-                    if investable <= 0:
+                    h = holdings[s]
+                    current_value = h["shares"] * px
+                    excess = max(0.0, current_value - desired_values.get(s, 0.0))
+                    if excess <= 0:
                         continue
+                    shares = min(h["shares"], excess / px)
+                    gross = shares * px
+                    fee = gross * tc_rate
+                    old_cost = h["cost_basis"]
+                    fraction = shares / h["shares"] if h["shares"] else 1.0
+                    cash += gross - fee
+                    h["shares"] -= shares
+                    h["cost_basis"] -= old_cost * fraction
+                    trade_rows.append({"date": ts, "action": "SELL", "symbol": s, "shares": shares, "price": px, "gross_value": gross, "fee": fee, "pnl": (gross - fee) - old_cost * fraction, "reason": "persistent_rebalance"})
+                    if h["shares"] <= 1e-12:
+                        holdings.pop(s)
+
+                for s, desired in desired_values.items():
+                    px = open_prices.get(s, np.nan)
+                    if np.isnan(px) or px <= 0:
+                        continue
+                    current = holdings[s]["shares"] * px if s in holdings else 0.0
+                    deficit = max(0.0, desired - current)
+                    capital = min(deficit, max(0.0, cash / (1.0 + tc_rate)))
+                    if capital <= 0:
+                        continue
+                    fee = capital * tc_rate
+                    investable = capital - fee
                     shares = investable / px
-                    cash -= target_capital
-                    holdings[s] = {"shares": shares, "entry_date": ts, "entry_price": px, "cost_basis": investable + fee}
-                    trade_rows.append({"date": ts, "action": "BUY", "symbol": s, "shares": shares, "price": px, "gross_value": target_capital, "fee": fee, "pnl": np.nan, "reason": "rebalance"})
+                    cash -= capital
+                    if s in holdings:
+                        holdings[s]["shares"] += shares
+                        holdings[s]["cost_basis"] += capital
+                    else:
+                        holdings[s] = {"shares": shares, "entry_date": ts, "entry_price": px, "cost_basis": capital}
+                    trade_rows.append({"date": ts, "action": "BUY", "symbol": s, "shares": shares, "price": px, "gross_value": capital, "fee": fee, "pnl": np.nan, "reason": "persistent_rebalance"})
+            else:
+                # Sell everything first (original full-turnover path), then buy.
+                for s in list(holdings):
+                    px = open_prices.get(s, np.nan)
+                    if np.isnan(px):
+                        continue
+                    h = holdings.pop(s)
+                    gross = h["shares"] * px
+                    fee = gross * tc_rate
+                    cash += gross - fee
+                    trade_rows.append({"date": ts, "action": "SELL", "symbol": s, "shares": h["shares"], "price": px, "gross_value": gross, "fee": fee, "pnl": (gross - fee) - h["cost_basis"], "reason": "rebalance"})
+                if target:
+                    total_w = sum(target.values())
+                    if total_w > 1.0 + 1e-9:
+                        target = {s: w / total_w for s, w in target.items()}
+                    for s, w in target.items():
+                        px = open_prices.get(s, np.nan)
+                        if np.isnan(px) or px <= 0:
+                            continue
+                        target_capital = cash * float(w)
+                        fee = target_capital * tc_rate
+                        investable = target_capital - fee
+                        if investable <= 0:
+                            continue
+                        shares = investable / px
+                        cash -= target_capital
+                        holdings[s] = {"shares": shares, "entry_date": ts, "entry_price": px, "cost_basis": investable + fee}
+                        trade_rows.append({"date": ts, "action": "BUY", "symbol": s, "shares": shares, "price": px, "gross_value": target_capital, "fee": fee, "pnl": np.nan, "reason": "rebalance"})
 
         # mark-to-market at close
         equity = cash
