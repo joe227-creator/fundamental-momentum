@@ -1,0 +1,9 @@
+{
+  "name": "sector-concentration-cap",
+  "study_name": "sector_concentration_cap",
+  "n_trials": 6,
+  "seed": 42,
+  "search": {
+    "sector_cap": {"type": "int", "low": 1, "high": 2}
+  }
+}

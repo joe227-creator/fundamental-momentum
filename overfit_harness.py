@@ -284,7 +284,8 @@ def apply_veto_and_select(base_scores, veto_mask, N, rng=None, perturb_sigma=0.0
                           corr_sessions=None, weight_tilt: float = 0.0,
                           conf_tilt: bool = False, median_gap=None,
                           conf_tilt_pow: float = 1.0, conf_tilt_vol: bool = False,
-                          vol_factor_map=None):
+                          vol_factor_map=None, sector_by_symbol=None,
+                          sector_cap: int | None = None):
     """Build weighted selection dict. If perturb_sigma>0, add Gaussian noise to
     each date's composite scores (deterministic-strategy perturbation analog).
     If corr_threshold>0: apply the correlation-diversification filter (top-1 +
@@ -299,6 +300,20 @@ def apply_veto_and_select(base_scores, veto_mask, N, rng=None, perturb_sigma=0.0
         vet = veto_mask.loc[d]
         vetoed = set(vet[vet].index) & set(sc.index) if d in veto_mask.index else set()
         sc2 = sc.drop(index=[s for s in vetoed if s in sc.index])
+        if sector_cap is not None and sector_cap > 0 and len(sc2) > N:
+            kept = []
+            counts = {}
+            for symbol in sc2.sort_values(ascending=False).index:
+                sector = (sector_by_symbol or {}).get(symbol)
+                if sector and counts.get(sector, 0) >= sector_cap:
+                    continue
+                kept.append(symbol)
+                if sector:
+                    counts[sector] = counts.get(sector, 0) + 1
+                if len(kept) >= N:
+                    break
+            if len(kept) >= N:
+                sc2 = sc2.loc[kept]
         if corr_threshold > 0 and N >= 2:
             sc2 = _apply_corr_filter(sc2, d, corr_threshold, rets_panel, corr_prior_map, corr_sessions)
         wsel[d] = _size_weights(sc2, N, d, vol_prior_frame, vol_scaled, weight_tilt,
