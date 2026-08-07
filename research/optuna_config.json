@@ -1,0 +1,10 @@
+{
+  "name": "conviction-tilt-re-tune",
+  "study_name": "conviction_tilt_re_tune",
+  "n_trials": 8,
+  "seed": 42,
+  "search": {
+    "weight_tilt": {"type": "float", "low": 0.05, "high": 0.25},
+    "conf_tilt_pow": {"type": "float", "low": 10.0, "high": 100.0}
+  }
+}
