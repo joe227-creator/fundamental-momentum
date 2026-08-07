@@ -1,0 +1,8 @@
+{
+  "n_seeds": 10,
+  "seed_start": 1042,
+  "perturb_sigma": 0.03,
+  "fixed": {
+    "rebalance_persistence": 0.2872700594236812
+  }
+}
