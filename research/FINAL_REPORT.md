@@ -27,7 +27,7 @@ Nonlinear rank aggregation plus static persistence keeps validated base selectio
 - Ten-seed score mean `0.6762969477`; median `0.6742146697`; std `0.0198114240`; min `0.6493130878`; max `0.7193872420`.
 - Every validation seed beats baseline score. Robust floor proxy `mean-1sd=0.6564855237`.
 - Regime means: pre-COVID `0.269314`, COVID `0.616127`, post-COVID `0.605475`.
-- Nonlinear promoted-branch reproduction expected to match validated score under fixed cache.
+- Final promoted-branch reproduction: score `0.7130773067`; perturb mean `0.6693636357`; std `0.0168591783`; min `0.6493349203`; max `0.6978934682`; turnover `65.6700033189`.
 
 ## Research Tree
 
