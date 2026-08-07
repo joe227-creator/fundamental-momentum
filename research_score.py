@@ -163,6 +163,24 @@ def _load_predictions(params: dict[str, Any]) -> tuple[pd.DataFrame, int]:
     return predicted.unstack(level="symbol"), context_len
 
 
+def _load_forecast_uncertainty(
+    params: dict[str, Any], dates: list[pd.Timestamp]
+) -> pd.DataFrame | None:
+    """Build PIT-safe cross-sectional quantile-dispersion features."""
+    power = float(params.get("forecast_uncertainty_power", 0.0))
+    if power <= 0.0:
+        return None
+    context_len = int(params.get("forecast_context_len", 256))
+    panel = load_forecast_panel(context_len, oh.HOR, kind="volume", quantiles=True)
+    if panel is None:
+        raise RuntimeError("Missing quantile volume forecast cache")
+    low = panel[[f"q2_h{h}" for h in range(oh.HOR)]].mean(axis=1)
+    mid = panel[[f"q5_h{h}" for h in range(oh.HOR)]].mean(axis=1)
+    high = panel[[f"q8_h{h}" for h in range(oh.HOR)]].mean(axis=1)
+    dispersion = ((high - low).abs() / mid.abs().clip(lower=1e-6)).unstack(level="symbol")
+    return dispersion.reindex(pd.DatetimeIndex(dates), method="ffill")
+
+
 def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
     params = json.loads(Path(params_path).read_text(encoding="utf-8"))
     oh.CTX = int(params.get("forecast_context_len", 256))
@@ -183,6 +201,7 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         use_relative_veto=bool(params.get("use_relative_veto", False)),
         relative_veto_pct=float(params.get("relative_veto_pct", 0.05)),
     )
+    forecast_uncertainty_frame = _load_forecast_uncertainty(params, dates)
 
     # Optional return-forecast tilt, retained for isolated ablations already
     # supported by the existing harness.
@@ -287,6 +306,8 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         "conf_tilt_pow": float(params.get("conf_tilt_pow", 1.0)),
         "conf_tilt_vol": bool(params.get("conf_tilt_vol", False)),
         "vol_factor_map": vol_factor_map,
+        "forecast_uncertainty_frame": forecast_uncertainty_frame,
+        "forecast_uncertainty_power": float(params.get("forecast_uncertainty_power", 0.0)),
         "regime_scale": regime_scale,
         "prior_ends": prior_ends,
         "dates": dates,
@@ -313,6 +334,8 @@ def _select(prepared: dict[str, Any], seed: int | None = None, sigma: float = 0.
         conf_tilt_pow=prepared["conf_tilt_pow"],
         conf_tilt_vol=prepared["conf_tilt_vol"],
         vol_factor_map=prepared["vol_factor_map"],
+        forecast_uncertainty_frame=prepared["forecast_uncertainty_frame"],
+        forecast_uncertainty_power=prepared["forecast_uncertainty_power"],
     )
     if prepared["regime_scale"] is not None:
         selected = {
