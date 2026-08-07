@@ -49,5 +49,7 @@
   "conf_tilt_vol": true,
   "conf_tilt_vol_pow": 4.0,
   "rebalance_persistence": 0.2872700594236812,
-  "rank_power": 1.0
+  "rank_power": 1.9966462104925915,
+  "technical_rank_power": 1.9966462104925915,
+  "fundamental_rank_power": 1.9966462104925915
 }

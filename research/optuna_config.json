@@ -1,9 +1,10 @@
 {
-  "name": "nonlinear-rank-aggregation",
-  "study_name": "nonlinear_rank_aggregation",
+  "name": "factor-specific-rank-powers",
+  "study_name": "factor_specific_rank_powers",
   "n_trials": 6,
   "seed": 42,
   "search": {
-    "rank_power": {"type": "float", "low": 0.5, "high": 3.0}
+    "technical_rank_power": {"type": "float", "low": 1.2, "high": 2.8},
+    "fundamental_rank_power": {"type": "float", "low": 0.5, "high": 2.5}
   }
 }
