@@ -1,0 +1,9 @@
+{
+  "name": "macro-conditioned-persistence",
+  "study_name": "macro_conditioned_persistence",
+  "n_trials": 6,
+  "seed": 42,
+  "search": {
+    "macro_persistence_multiplier": {"type": "float", "low": 0.0, "high": 2.0}
+  }
+}
