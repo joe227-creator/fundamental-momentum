@@ -183,6 +183,28 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         use_relative_veto=bool(params.get("use_relative_veto", False)),
         relative_veto_pct=float(params.get("relative_veto_pct", 0.05)),
     )
+    consensus_blend = float(np.clip(params.get("consensus_blend", 0.0), 0.0, 1.0))
+    if consensus_blend > 0.0:
+        consensus_scores: dict[pd.Timestamp, pd.Series] = {}
+        for date in dates:
+            if date not in base_scores:
+                continue
+            factor_ranks = [
+                state.ranked_factors[name].loc[date].rename(name)
+                for name in state.factor_names
+                if name in state.ranked_factors and date in state.ranked_factors[name].index
+            ]
+            if not factor_ranks:
+                continue
+            median_rank = pd.concat(factor_ranks, axis=1).median(axis=1).fillna(0.0)
+            base = base_scores[date].reindex(median_rank.index).fillna(0.0)
+            blended = (1.0 - consensus_blend) * base + consensus_blend * median_rank
+            eligible = state.base_mask.loc[date].fillna(False)
+            blended = blended[eligible].replace([np.inf, -np.inf], np.nan).dropna()
+            if bool(params.get("require_positive_composite", True)):
+                blended = blended[blended > 0.0]
+            consensus_scores[date] = blended.sort_values(ascending=False)
+        base_scores = consensus_scores
 
     # Optional return-forecast tilt, retained for isolated ablations already
     # supported by the existing harness.
@@ -287,6 +309,7 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         "conf_tilt_pow": float(params.get("conf_tilt_pow", 1.0)),
         "conf_tilt_vol": bool(params.get("conf_tilt_vol", False)),
         "vol_factor_map": vol_factor_map,
+        "consensus_blend": consensus_blend,
         "regime_scale": regime_scale,
         "prior_ends": prior_ends,
         "dates": dates,
@@ -390,6 +413,21 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--bootstrap-baseline-reference", action="store_true")
     args = parser.parse_args()
+
+    optuna_config = Path("research/optuna_config.json")
+    if optuna_config.exists():
+        from research.optuna_runner import run_optuna
+
+        return run_optuna(
+            config_path=args.config,
+            params_path=args.params,
+            reference_path=args.reference,
+            artifact_dir=args.artifact_dir,
+            optuna_config_path=str(optuna_config),
+            perturb_runs=args.perturb_runs,
+            perturb_sigma=args.perturb_sigma,
+            seed=args.seed,
+        )
 
     prepared = _prepare_strategy(args.config, args.params)
     base_selection = _select(prepared)

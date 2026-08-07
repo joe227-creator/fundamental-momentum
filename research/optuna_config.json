@@ -1,0 +1,9 @@
+{
+  "name": "robust-median-rank-consensus",
+  "study_name": "robust_median_rank_consensus",
+  "n_trials": 6,
+  "seed": 42,
+  "search": {
+    "consensus_blend": {"type": "float", "low": 0.0, "high": 1.0}
+  }
+}
