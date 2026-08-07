@@ -261,6 +261,7 @@ def run_weighted_backtest(
     initial_capital: float | None = None,
     start_date: pd.Timestamp | str | None = None,
     rebalance_persistence: float = 0.0,
+    rebalance_persistence_map: dict[pd.Timestamp, float] | None = None,
 ) -> dict[str, Any]:
     """Simulate equity with per-position target weights (fraction of equity).
 
@@ -291,8 +292,13 @@ def run_weighted_backtest(
         target = weighted_selection.get(ts)
         if target is not None:
             target = {s: float(w) for s, w in target.items() if s in context.prices.close.columns and w > 0}
+            persistence_for_date = float(
+                rebalance_persistence_map.get(ts, rebalance_persistence)
+                if rebalance_persistence_map is not None
+                else rebalance_persistence
+            )
             # Skip rebalance if target matches current holdings (avoids unnecessary turnover)
-            if target and rebalance_persistence <= 0 and set(target.keys()) == set(holdings.keys()):
+            if target and persistence_for_date <= 0 and set(target.keys()) == set(holdings.keys()):
                 target = None
         if target is not None:
             sel_rows.append({"date": ts, "symbols": ",".join(target.keys()), "num_symbols": len(target), "weights": json.dumps(target, default=str)})
@@ -302,7 +308,7 @@ def run_weighted_backtest(
 
             # close positions not in target (and liquidate to hit target weights)
             eq_open = cash + sum(h["shares"] * open_prices[s] for s, h in holdings.items() if not np.isnan(open_prices.get(s, np.nan)))
-            persistent = float(np.clip(rebalance_persistence, 0.0, 1.0))
+            persistent = float(np.clip(persistence_for_date, 0.0, 1.0))
             if persistent > 0 and holdings and eq_open > 0:
                 total_w = sum(target.values())
                 if total_w > 1.0 + 1e-9:

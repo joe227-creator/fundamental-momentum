@@ -250,6 +250,17 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
                         factor = min(vol_cap, (value / median_vol) ** vol_power)
                 vol_factor_map[date] = factor
 
+    persistence = float(params.get("rebalance_persistence", 0.0))
+    adaptive_persistence_map = None
+    if bool(params.get("adaptive_persistence", False)) and median_gap and median_gap > 0:
+        adaptive_power = float(params.get("adaptive_persistence_power", 1.0))
+        adaptive_persistence_map = {}
+        for date, scores in base_scores.items():
+            clean = scores.replace([np.inf, -np.inf], np.nan).dropna().sort_values(ascending=False)
+            gap = abs(float(clean.iloc[0]) - float(clean.iloc[1])) if len(clean) >= 2 else median_gap
+            confidence = min(1.0, gap / median_gap)
+            adaptive_persistence_map[date] = persistence * confidence ** adaptive_power
+
     regime_scale = None
     if bool(params.get("use_regime_cash", False)):
         sma_window = int(params.get("regime_cash_sma", params.get("sma_trend", 201)))
@@ -287,6 +298,9 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         "conf_tilt_pow": float(params.get("conf_tilt_pow", 1.0)),
         "conf_tilt_vol": bool(params.get("conf_tilt_vol", False)),
         "vol_factor_map": vol_factor_map,
+        "rebalance_persistence": persistence,
+        "adaptive_persistence_map": adaptive_persistence_map,
+        "adaptive_persistence_power": float(params.get("adaptive_persistence_power", 1.0)),
         "regime_scale": regime_scale,
         "prior_ends": prior_ends,
         "dates": dates,
@@ -331,6 +345,7 @@ def _evaluate_result(prepared: dict[str, Any], selection: dict[pd.Timestamp, dic
         tc_rate=float(params.get("cost_per_side", 0.0003)),
         start_date=START_DATE,
         rebalance_persistence=float(params.get("rebalance_persistence", 0.0)),
+        rebalance_persistence_map=prepared.get("adaptive_persistence_map"),
     )
     equity = result["equity_curve"]["equity"].dropna()
     if equity.empty or not equity.index.is_monotonic_increasing or (equity <= 0).any():
