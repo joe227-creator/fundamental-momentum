@@ -414,6 +414,18 @@ def main() -> int:
     parser.add_argument("--bootstrap-baseline-reference", action="store_true")
     args = parser.parse_args()
 
+    validation_config = Path("research/validation_config.json")
+    if validation_config.exists():
+        from research.validation_audit import run_validation
+
+        return run_validation(
+            config_path=args.config,
+            params_path=args.params,
+            reference_path=args.reference,
+            artifact_dir=args.artifact_dir,
+            validation_config_path=str(validation_config),
+        )
+
     optuna_config = Path("research/optuna_config.json")
     if optuna_config.exists():
         from research.optuna_runner import run_optuna
