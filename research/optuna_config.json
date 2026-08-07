@@ -1,9 +1,10 @@
 {
-  "name": "nonlinear-rank-aggregation",
-  "study_name": "nonlinear_rank_aggregation",
+  "name": "nonlinear-rank-persistence-joint",
+  "study_name": "nonlinear_rank_persistence_joint",
   "n_trials": 6,
   "seed": 42,
   "search": {
-    "rank_power": {"type": "float", "low": 0.5, "high": 3.0}
+    "rank_power": {"type": "float", "low": 1.5, "high": 2.5},
+    "rebalance_persistence": {"type": "float", "low": 0.1, "high": 0.45}
   }
 }
