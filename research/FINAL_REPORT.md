@@ -26,6 +26,7 @@ Static persistence keeps validated base selection and gradually moves holdings t
 - Ten-seed score mean `0.6486837050`; median `0.6526871073`; std `0.0322228874`; min `0.5819193522`; max `0.7108035343`.
 - Robust floor proxy `mean-1sd=0.6164608176`, narrowly above baseline point score.
 - Regime means: pre-COVID `0.276098`, COVID `0.609620`, post-COVID `0.584259`.
+- Final promoted-branch reproduction: score `0.6806700401`; perturb mean `0.6568753335`; perturb min `0.6099800264`; turnover `78.7655903000`.
 
 ## Research Tree
 
@@ -40,6 +41,7 @@ Full IDs, branches, parameters, metrics, and decisions: `research/experiment_led
 - Look-ahead violations: 0 of 132 rebalance dates.
 - Current-data limitation: historical holdings snapshots remain incomplete outside primary audit window; survivorship bias remains.
 - Candidate max drawdown exceeds `-0.50`; objective penalizes this, but deployment risk remains material.
+- Verification: evaluator modules compile; 22 tests passed and 2 skipped. Two inherited live-trading tests fail outside research path: blank position symbols serialize as `NAN`, and trade-log dates mix date-only and datetime strings. These were not changed during research promotion.
 
 ## Reproduction
 
