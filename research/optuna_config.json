@@ -1,0 +1,16 @@
+{
+  "name": "walk-forward-training-window",
+  "study_name": "walk_forward_training_window",
+  "n_trials": 6,
+  "seed": 42,
+  "fixed": {
+    "use_quantile_veto": true,
+    "quantile_col": 1,
+    "veto_horizon": 21
+  },
+  "search": {
+    "train_years": {"type": "int", "low": 3, "high": 8},
+    "step_months": {"type": "categorical", "choices": [6, 12]},
+    "min_train_rebalances": {"type": "int", "low": 13, "high": 52}
+  }
+}
