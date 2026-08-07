@@ -183,6 +183,17 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         use_relative_veto=bool(params.get("use_relative_veto", False)),
         relative_veto_pct=float(params.get("relative_veto_pct", 0.05)),
     )
+    smoothing = float(params.get("score_smoothing", 0.0))
+    if smoothing > 0.0 and base_scores:
+        previous = None
+        for date in sorted(base_scores):
+            current = base_scores[date]
+            if previous is not None:
+                aligned = current.index.union(previous.index)
+                current = current.reindex(aligned).fillna(0.0)
+                prior = previous.reindex(aligned).fillna(0.0)
+                base_scores[date] = (1.0 - smoothing) * current + smoothing * prior
+            previous = base_scores[date]
 
     # Optional return-forecast tilt, retained for isolated ablations already
     # supported by the existing harness.
@@ -287,6 +298,7 @@ def _prepare_strategy(config_path: str, params_path: str) -> dict[str, Any]:
         "conf_tilt_pow": float(params.get("conf_tilt_pow", 1.0)),
         "conf_tilt_vol": bool(params.get("conf_tilt_vol", False)),
         "vol_factor_map": vol_factor_map,
+        "score_smoothing": smoothing,
         "regime_scale": regime_scale,
         "prior_ends": prior_ends,
         "dates": dates,
